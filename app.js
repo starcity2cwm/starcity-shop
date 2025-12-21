@@ -1895,58 +1895,7 @@ class StarcityApp {
         this.render();
     }
 
-
-    showAddProductModal() {
-        document.getElementById('addProductModalTitle').textContent = 'Add New Product';
-        document.getElementById('productId').value = '';
-        document.getElementById('addProductForm').reset();
-        document.getElementById('imagePreview').style.display = 'none';
-        document.getElementById('imagePreviewText').style.display = 'block';
-        document.getElementById('addProductSubmitBtn').textContent = 'Add Product';
-        this.showModal('addProductModal');
-    }
-
-    handleAddProduct() {
-        const fileInput = document.getElementById('productImageInput');
-        const file = fileInput.files[0];
-
-        const saveProduct = (imageData) => {
-            const id = document.getElementById('productId').value;
-            const productData = {
-                name: document.getElementById('productName').value,
-                category: document.getElementById('productCategory').value,
-                brand: document.getElementById('productBrand').value,
-                quantity: parseInt(document.getElementById('productQty').value),
-                minQuantity: parseInt(document.getElementById('productMinQty').value),
-                cost: parseFloat(document.getElementById('productCost').value),
-                price: parseFloat(document.getElementById('productPrice').value),
-                image: imageData || (id ? this.stock.find(p => String(p.id) === String(id))?.image : null)
-            };
-
-            if (id) {
-                const index = this.stock.findIndex(p => String(p.id) === String(id));
-                if (index !== -1) {
-                    this.stock[index] = { ...this.stock[index], ...productData };
-                }
-            } else {
-                this.stock.push({ id: Date.now(), ...productData });
-            }
-
-            this.saveData('stock');
-            this.closeModal('addProductModal');
-            document.getElementById('addProductForm').reset();
-            this.showToast(`✓ Product ${id ? 'updated' : 'added'} successfully!`);
-            this.render();
-        };
-
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => saveProduct(e.target.result);
-            reader.readAsDataURL(file);
-        } else {
-            saveProduct(null);
-        }
-    }
+    // NOTE: showAddProductModal and handleAddProduct are defined earlier at lines ~1441 and ~1479
 
     editStockItem(id) {
         const item = this.stock.find(p => String(p.id) === String(id));
