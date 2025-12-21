@@ -6,7 +6,7 @@
 
 class SyncManager {
     constructor() {
-        this.scriptUrl = 'https://script.google.com/macros/s/AKfycbwCRVqYC2zg4aU9svapzw10WcBp2zWuAKlb_A3GV8nYNiUs79UN36OcmJrAMk_CNWs4nA/exec'; // Will be configured during setup
+        this.scriptUrl = 'https://script.google.com/macros/s/AKfycbzKSaY_UQBEl_meRDtaaDOajqc5iYfT5PcYomg2ADWaPP75zubx1Hv1W8ZuZ7-76Ma4ig/exec'; // New deployment URL
         this.cache = {}; // Local cache for offline support
         this.pendingSync = []; // Queue for offline operations
         this.isOnline = navigator.onLine;
