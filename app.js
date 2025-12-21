@@ -179,7 +179,7 @@ class StarcityApp {
 
     // ===== SAMPLE DATA =====
     loadSampleData() {
-        if (this.stock.length === 0) {
+        if (!this.stock || this.stock.length === 0) {
             this.stock = [
                 { id: 1, name: 'iPhone 15 Pro', category: 'Phones', brand: 'Apple', quantity: 8, minQuantity: 3, cost: 390000, price: 450000 },
                 { id: 2, name: 'Samsung Galaxy S24', category: 'Phones', brand: 'Samsung', quantity: 12, minQuantity: 5, cost: 320000, price: 380000 },
