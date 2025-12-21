@@ -454,7 +454,9 @@ class StarcityApp {
 
         if (user) {
             this.currentUser = user;
-            this.showScreen(user.role === 'manager' ? 'manager' : 'technician');
+            // Fix: Make role comparison case-insensitive
+            const userRole = (user.role || '').toLowerCase();
+            this.showScreen(userRole === 'manager' ? 'manager' : 'technician');
             this.render();
             this.showToast(`Welcome back, ${user.name}!`);
         } else {
