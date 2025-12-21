@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="description" content="Complete shop management system for mobile shops">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Starcity">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <title>Starcity Shop Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Cloud Sync Scripts - Load BEFORE app.js -->
+    <script src="syncManager.js"></script>
+    <script src="storageAdapter.js"></script>
+</head>
+
+<body>
+    <!-- App Container -->
+    <!-- Toast Notification Container -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 10000;"></div>
+
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen active">
+            <div class="login-container">
+                <div class="login-header">
+                    <div class="shop-logo">⭐</div>
+                    <h1 class="shop-name">Starcity</h1>
+                    <p class="shop-tagline">Mobile Shop Manager</p>
+                </div>
+
+                <div class="login-card">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" placeholder="Enter username" required
+                                autocomplete="username">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" placeholder="Enter password" required
+                                autocomplete="current-password">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            Login
+                        </button>
+                    </form>
+
+                    <div class="demo-credentials">
+                        <p class="demo-title">Demo Accounts:</p>
+                        <div class="demo-account">
+                            <strong>Manager:</strong> manager / admin123
+                        </div>
+                        <div class="demo-account">
+                            <strong>Technician:</strong> tech1 / tech123
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manager Dashboard -->
+        <div id="managerScreen" class="screen">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-content">
+                    <div class="header-left">
+                        <div class="logo">⭐</div>
+                        <div>
+                            <h1 class="app-title">Starcity</h1>
+                            <p class="user-role" id="managerName">Manager</p>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <button class="icon-btn" id="managerNotificationBtn">
+                            <span class="notification-badge" id="managerNotificationBadge">0</span>
+                            🔔
+                        </button>
+                        <button class="icon-btn" id="managerLogoutBtn">🚪</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="main-content" id="managerContent">
+                <!-- Dashboard View -->
+                <section id="managerDashboardView" class="view active">
+                    <div class="page-header">
+                        <h2>Dashboard</h2>
+                        <p class="page-subtitle">Manager Overview</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card primary" onclick="app.switchManagerView('sales')"
+                            style="cursor: pointer;">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-info">
+                                <p class="stat-label">Today's Sales</p>
+                                <h3 class="stat-value" id="mgrTodaySales">Rs. 0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card danger" onclick="app.switchManagerView('approvals')"
+                            style="cursor: pointer;">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-info">
+                                <p class="stat-label">Pending Approvals</p>
+                                <h3 class="stat-value" id="mgrPendingApprovals">0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card success" onclick="app.switchManagerView('reports')"
+                            style="cursor: pointer;">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-info">
+                                <p class="stat-label">Monthly Revenue</p>
+                                <h3 class="stat-value" id="mgrMonthlyRevenue">Rs. 0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card warning"
+                            onclick="app.switchManagerView('credits'); app.switchCreditTab('vendor')"
+                            style="cursor: pointer;">
+                            <div class="stat-icon">💳</div>
+                            <div class="stat-info">
+                                <p class="stat-label">Vendor Dues</p>
+                                <h3 class="stat-value" id="mgrVendorDues">Rs. 0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card danger"
+                            onclick="app.switchManagerView('credits'); app.switchCreditTab('customer')"
+                            style="cursor: pointer;">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-info">
+                                <p class="stat-label">Customer Dues</p>
+                                <h3 class="stat-value" id="mgrCustomerDues">Rs. 0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <button class="action-btn" onclick="app.switchManagerView('approvals')">
+                            <span class="action-icon">✓</span>
+                            <span class="action-label">Approve Repairs</span>
+                            <span class="action-badge" id="approvalsBadge">0</span>
+                        </button>
+                        <button class="action-btn" onclick="app.switchManagerView('stock')">
+                            <span class="action-icon">📦</span>
+                            <span class="action-label">Manage Stock</span>
+                        </button>
+                        <button class="action-btn" onclick="app.switchManagerView('reports')">
+                            <span class="action-icon">📈</span>
+                            <span class="action-label">View Reports</span>
+                        </button>
+                        <button class="action-btn" onclick="app.switchManagerView('warranty')">
+                            <span class="action-icon">🛡️</span>
+                            <span class="action-label">Warranty Tracking</span>
+                        </button>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Repairs</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="mgrRecentRepairs" class="activity-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Sales</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="mgrRecentSalesDash" class="activity-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Approvals View -->
+                <section id="managerApprovalsView" class="view">
+                    <div class="page-header">
+                        <h2>Approve Repairs</h2>
+                        <p class="page-subtitle">Review and approve completed jobs</p>
+                    </div>
+
+                    <div class="tabs-container"
+                        style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-md);">
+                        <button class="tab-btn active" id="btnApprovalsTab" onclick="app.switchApprovalsTab('pending')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">Pending
+                            Approvals</button>
+                        <button class="tab-btn" id="btnCommissionsTab" onclick="app.switchApprovalsTab('commissions')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">Technician
+                            Commissions</button>
+                    </div>
+
+                    <div id="pendingApprovalsSection">
+                        <div id="approvalsList" class="approvals-list"></div>
+                    </div>
+
+                    <div id="commissionsSection" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Commission Summary</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                                    <div class="stat-card success">
+                                        <div class="stat-info">
+                                            <p class="stat-label">This Month Total</p>
+                                            <h3 class="stat-value" id="commissionsThisMonth">Rs. 0</h3>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card info">
+                                        <div class="stat-info">
+                                            <p class="stat-label">Last Month Total</p>
+                                            <h3 class="stat-value" id="commissionsLastMonth">Rs. 0</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="commissionsList" class="activity-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="technicianHistorySection" style="display: none;">
+                        <div class="page-header" style="margin-bottom: 1rem;">
+                            <button class="btn btn-outline btn-sm" onclick="app.backToCommissions()"
+                                style="margin-bottom: 0.5rem;">
+                                ← Back to Commissions
+                            </button>
+                            <h2 id="techHistoryName">Technician History</h2>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="techHistoryList" class="activity-list"></div>
+                                <div id="techHistorySummary"
+                                    style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius-md);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Stock View -->
+                <section id="managerStockView" class="view">
+                    <div class="page-header">
+                        <h2>Manage inventory</h2>
+                        <p class="page-subtitle">Track and manage your stock</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="search-bar">
+                                <input type="text" id="mgrStockSearch" placeholder="🔍 Search products..."
+                                    oninput="app.filterStockByCategory(null, this.value)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter Buttons -->
+                    <div id="categoryFilters"
+                        style="display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.5rem 0; margin-bottom: 1rem;">
+                        <button class="category-btn active" onclick="app.filterStockByCategory('all')"
+                            data-category="all"
+                            style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--primary); color: white; white-space: nowrap; cursor: pointer; font-weight: 500;">
+                            📋 All
+                        </button>
+                        <button class="category-btn" onclick="app.filterStockByCategory('Phones')"
+                            data-category="Phones"
+                            style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); white-space: nowrap; cursor: pointer; font-weight: 500;">
+                            📱 Phones
+                        </button>
+                        <button class="category-btn" onclick="app.filterStockByCategory('Accessories')"
+                            data-category="Accessories"
+                            style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); white-space: nowrap; cursor: pointer; font-weight: 500;">
+                            🎧 Accessories
+                        </button>
+                        <button class="category-btn" onclick="app.filterStockByCategory('Parts')" data-category="Parts"
+                            style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); white-space: nowrap; cursor: pointer; font-weight: 500;">
+                            🔧 Parts
+                        </button>
+                    </div>
+
+                    <div id="mgrStockList" class="stock-grid"></div>
+                    <button class="fab" onclick="app.showAddProductModal()">+</button>
+                </section>
+
+                <!-- Sales View (Combined with Stock) -->
+                <section id="managerSalesView" class="view">
+                    <div class="page-header">
+                        <h2>Stocks</h2>
+                        <p class="page-subtitle">Track and manage your stock</p>
+                    </div>
+
+                    <div class="tabs-container"
+                        style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-md);">
+                        <button class="tab-btn active" id="btnStockTab" onclick="app.switchFinanceTab('stock')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">Manage
+                            inventory</button>
+                        <button class="tab-btn" id="btnSalesTab" onclick="app.switchFinanceTab('sales')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">Record
+                            Sale</button>
+                        <button class="tab-btn" id="btnHistoryTab" onclick="app.switchFinanceTab('history')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">Sale
+                            History</button>
+                    </div>
+
+                    <!-- Stock Management Tab -->
+                    <div id="financeStockSection">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Stock Management</h3>
+                                <div class="search-bar">
+                                    <input type="text" id="mgrStockSearch2" placeholder="🔍 Search products..."
+                                        oninput="app.filterStockByCategory(null, this.value)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Filter Buttons -->
+                        <div id="categoryFilters2"
+                            style="display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.5rem 0; margin-bottom: 1rem;">
+                            <button class="category-btn active" onclick="app.filterStockByCategory('all')"
+                                data-category="all"
+                                style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--primary); color: white; white-space: nowrap; cursor: pointer; font-weight: 500;">
+                                📋 All
+                            </button>
+                            <button class="category-btn" onclick="app.filterStockByCategory('Phones')"
+                                data-category="Phones"
+                                style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); white-space: nowrap; cursor: pointer; font-weight: 500;">
+                                📱 Phones
+                            </button>
+                            <button class="category-btn" onclick="app.filterStockByCategory('Accessories')"
+                                data-category="Accessories"
+                                style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); white-space: nowrap; cursor: pointer; font-weight: 500;">
+                                🎧 Accessories
+                            </button>
+                            <button class="category-btn" onclick="app.filterStockByCategory('Parts')"
+                                data-category="Parts"
+                                style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); white-space: nowrap; cursor: pointer; font-weight: 500;">
+                                🔧 Parts
+                            </button>
+                        </div>
+
+                        <div id="mgrStockList2" class="stock-grid"></div>
+                        <button class="fab" onclick="app.showAddProductModal()">+</button>
+                    </div>
+
+                    <!-- Record Sale Tab -->
+                    <div id="financeSalesSection" style="display: none;">
+                        <div class="card">
+                            <div class="card-body">
+                                <form id="mgrSalesForm" class="form">
+                                    <div id="saleItemsContainer">
+                                        <!-- Dynamic Item Rows -->
+                                        <div id="saleItemRows">
+                                            <div class="sale-item-row card"
+                                                style="background: var(--bg-tertiary); padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border);">
+                                                <div class="form-group">
+                                                    <label>Product</label>
+                                                    <select class="item-product" required
+                                                        onchange="app.autoFillPrice(this)">
+                                                        <option value="">-- Select Product --</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-row">
+                                                    <div class="form-group">
+                                                        <label>Quantity</label>
+                                                        <input type="number" class="item-qty" min="1" value="1" required
+                                                            oninput="app.calculateGrandTotal()">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Price (Rs.)</label>
+                                                        <input type="number" class="item-price" step="0.01" required
+                                                            oninput="app.calculateGrandTotal()">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" class="btn btn-outline btn-sm btn-block"
+                                        style="margin-bottom: 1.5rem;" onclick="app.addNewSaleRow()">+ Add Another
+                                        Item</button>
+
+                                    <div class="form-group">
+                                        <label for="mgrSaleCustomer">Customer Name</label>
+                                        <input type="text" id="mgrSaleCustomer" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="mgrSalePhone">Customer Phone</label>
+                                        <input type="tel" id="mgrSalePhone">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="mgrSalePayment">Payment Method</label>
+                                        <select id="mgrSalePayment" required>
+                                            <option value="Cash">Cash</option>
+                                            <option value="Card">Card</option>
+                                            <option value="Digital">Digital Payment</option>
+                                            <option value="Credit">Credit (Debt)</option>
+                                        </select>
+                                    </div>
+                                    <div class="total-display">
+                                        <span>Grand Total:</span>
+                                        <strong id="mgrSaleTotal">Rs. 0</strong>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block">Complete Sale</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sale History Tab -->
+                    <div id="financeHistorySection" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Sale History</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="mgrSalesHistory" class="activity-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="managerCreditsView" class="view">
+                    <div class="page-header">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h2>Credit Management</h2>
+                                <p class="page-subtitle">Cash Balance, Customer Total, Vendor Total</p>
+                                <div
+                                    style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+                                    <div
+                                        style="background: var(--bg-secondary); padding: 0.75rem; border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
+                                        <div
+                                            style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                            Cash Balance</div>
+                                        <div id="cashBalanceBadge"
+                                            style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">Rs. 0
+                                        </div>
+                                    </div>
+                                    <div
+                                        style="background: var(--bg-secondary); padding: 0.75rem; border-radius: var(--radius-md); border-left: 3px solid var(--success);">
+                                        <div
+                                            style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                            Customer Total</div>
+                                        <div id="customerTotalBadge"
+                                            style="font-size: 1.25rem; font-weight: 700; color: var(--success);">Rs. 0
+                                        </div>
+                                    </div>
+                                    <div
+                                        style="background: var(--bg-secondary); padding: 0.75rem; border-radius: var(--radius-md); border-left: 3px solid var(--warning);">
+                                        <div
+                                            style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                            Vendor Total</div>
+                                        <div id="vendorTotalBadge"
+                                            style="font-size: 1.25rem; font-weight: 700; color: var(--warning);">Rs. 0
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tabs-container"
+                        style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-md);">
+                        <button class="tab-btn active" id="btnDailySummaryTab" onclick="app.switchCreditTab('daily')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">💰
+                            Daily Summary</button>
+                        <button class="tab-btn" id="btnCustomerTab" onclick="app.switchCreditTab('customer')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">Customers</button>
+                        <button class="tab-btn" id="btnVendorTab" onclick="app.switchCreditTab('vendor')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">Vendors</button>
+                    </div>
+
+                    <div id="customerCreditsSection">
+                        <div class="card">
+                            <div class="card-header"
+                                style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3>Active Customer Debts</h3>
+                                <button class="btn btn-primary btn-sm" onclick="app.showManualCreditModal()">➕ Add
+                                    Entry</button>
+                            </div>
+                            <div class="card-body">
+                                <div id="mgrCustomerCreditsList" class="activity-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="vendorCreditsSection" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Vendor Balances (Owed)</h3>
+                                <button class="btn btn-primary btn-sm" onclick="app.showAddVendorModal()">➕ Add
+                                    Entry</button>
+                            </div>
+                            <div class="card-body">
+                                <div id="mgrVendorCreditsList" class="activity-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="expensesSection" style="display: none;">
+                        <button class="btn btn-outline btn-sm" onclick="app.hideExpensesView()"
+                            style="margin-bottom: 1rem;">
+                            ← Back to Credits
+                        </button>
+
+                        <!-- Daily Cash Summary Card -->
+                        <div class="card"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 1.5rem;">
+                            <div class="card-body">
+                                <h3 style="color: white; margin-bottom: 1rem;">📊 Today's Cash Summary</h3>
+                                <div class="stats-grid" style="margin-bottom: 1rem;">
+                                    <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px;">
+                                        <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Opening
+                                            Balance</p>
+                                        <h3 id="cashOpeningBalance" style="color: white; margin: 0;">Rs. 0</h3>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px;">
+                                        <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Total
+                                            Income</p>
+                                        <h3 id="cashTotalIncome" style="color: white; margin: 0;">Rs. 0</h3>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px;">
+                                        <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Total
+                                            Expenses</p>
+                                        <h3 id="cashTotalExpenses" style="color: white; margin: 0;">Rs. 0</h3>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px;">
+                                        <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Closing
+                                            Balance</p>
+                                        <h3 id="cashClosingBalance" style="color: white; margin: 0;">Rs. 0</h3>
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.85rem; opacity: 0.8; text-align: center;">
+                                    Date: <span id="cashCurrentDate"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Entry Tabs -->
+                        <div class="tabs-container"
+                            style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-md);">
+                            <button class="tab-btn active" id="btnCashIncomeTab" onclick="app.switchCashTab('income')"
+                                style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">
+                                Record Income
+                            </button>
+                            <button class="tab-btn" id="btnCashExpenseTab" onclick="app.switchCashTab('expense')"
+                                style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">
+                                Record Expense
+                            </button>
+                            <button class="tab-btn" id="btnCashHistoryTab" onclick="app.switchCashTab('history')"
+                                style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">
+                                Daily History
+                            </button>
+                        </div>
+
+                        <!-- Income Entry Section -->
+                        <div id="cashIncomeSection">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Add Income</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form id="cashIncomeForm" class="form"
+                                        onsubmit="event.preventDefault(); app.handleIncomeSubmit();">
+                                        <div class="form-group">
+                                            <label for="incomeType">Income Type</label>
+                                            <select id="incomeType" required
+                                                onchange="app.toggleCustomIncomeType(this)">
+                                                <option value="sales">💰 Sales Income</option>
+                                                <option value="service">🔧 Service/Repair Income</option>
+                                                <option value="external">💵 External Savings (Money Added)</option>
+                                                <option value="__custom__">➕ Add New Type...</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" id="customIncomeTypeDiv" style="display: none;">
+                                            <label for="customIncomeType">Custom Income Type Name</label>
+                                            <input type="text" id="customIncomeType"
+                                                placeholder="Enter new income type name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="incomeAmount">Amount (Rs.)</label>
+                                            <input type="number" id="incomeAmount" step="0.01" min="0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="incomeNote">Note/Description</label>
+                                            <input type="text" id="incomeNote" placeholder="Optional note">
+                                        </div>
+                                        <button type="submit" class="btn btn-success btn-block">💰 Add Income</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Expense Entry Section -->
+                        <div id="cashExpenseSection" style="display: none;">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Add Expense</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form id="cashExpenseForm" class="form"
+                                        onsubmit="event.preventDefault(); app.handleExpenseSubmit();">
+                                        <div class="form-group">
+                                            <label for="expenseCategory">Expense Category</label>
+                                            <select id="expenseCategory" required
+                                                onchange="app.toggleCustomExpenseCategory(this)">
+                                                <option value="labour">👷 Labour / Daily Wages</option>
+                                                <option value="meals">🍽️ Meals / Food</option>
+                                                <option value="rent">🏢 Shop Rent</option>
+                                                <option value="utilities">💡 Utilities (Electricity, Water)</option>
+                                                <option value="transport">🚗 Transportation</option>
+                                                <option value="other">📝 Miscellaneous / Other</option>
+                                                <option value="__custom__">➕ Add New Category...</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" id="customExpenseCategoryDiv" style="display: none;">
+                                            <label for="customExpenseCategory">Custom Category Name</label>
+                                            <input type="text" id="customExpenseCategory"
+                                                placeholder="Enter new category name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="expenseAmount">Amount (Rs.)</label>
+                                            <input type="number" id="expenseAmount" step="0.01" min="0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="expenseNote">Note/Description</label>
+                                            <input type="text" id="expenseNote" placeholder="Optional note" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-danger btn-block">💸 Add Expense</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Daily History Section -->
+                        <div id="cashHistorySection" style="display: none;">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Daily Cash Ledger</h3>
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.5rem 0 0 0;">
+                                        Complete daily cash flow history</p>
+                                </div>
+                                <div class="card-body">
+                                    <div id="cashDailyHistory" class="activity-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reports View -->
+                <section id="managerReportsView" class="view">
+                    <div class="page-header">
+                        <h2>Business Analytics</h2>
+                        <p class="page-subtitle">Shop performance reports</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- Report Mode Selection -->
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label style="margin-bottom: 0.5rem; display: block; font-weight: 600;">Report
+                                    Type:</label>
+                                <div style="display: flex; gap: 1rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                                        <input type="radio" name="reportMode" value="monthly" checked
+                                            onchange="app.toggleReportMode('monthly')">
+                                        <span>Monthly Report</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                                        <input type="radio" name="reportMode" value="dateRange"
+                                            onchange="app.toggleReportMode('dateRange')">
+                                        <span>Date Range Report</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Monthly Mode -->
+                            <div id="monthlyModeInputs" class="form-row">
+                                <div class="form-group">
+                                    <label for="mgrReportMonth">Select Month</label>
+                                    <input type="month" id="mgrReportMonth">
+                                </div>
+                                <div class="form-group" style="align-self: flex-end;">
+                                    <button class="btn btn-primary btn-block" onclick="app.generateReport()">Generate
+                                        Report</button>
+                                </div>
+                            </div>
+
+                            <!-- Date Range Mode -->
+                            <div id="dateRangeModeInputs" class="form-row" style="display: none;">
+                                <div class="form-group">
+                                    <label for="reportFromDate">From Date</label>
+                                    <input type="date" id="reportFromDate">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reportToDate">To Date</label>
+                                    <input type="date" id="reportToDate">
+                                </div>
+                                <div class="form-group" style="align-self: flex-end;">
+                                    <button class="btn btn-primary btn-block" onclick="app.generateReport()">Generate
+                                        Report</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card primary">
+                            <div class="stat-info">
+                                <p class="stat-label">Total Sales</p>
+                                <h3 class="stat-value" id="mgrReportSales">Rs. 0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card info">
+                            <div class="stat-info">
+                                <p class="stat-label">Repair Revenue</p>
+                                <h3 class="stat-value" id="mgrReportRepairs">Rs. 0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-info">
+                                <p class="stat-label">Technician Commissions</p>
+                                <h3 class="stat-value" id="mgrReportCommissions">Rs. 0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card danger">
+                            <div class="stat-info">
+                                <p class="stat-label">Total Expenses</p>
+                                <h3 class="stat-value" id="mgrReportExpenses">Rs. 0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3>Commission Trends</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="margin-bottom: 2rem;">
+                                <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Daily
+                                    Commission (Selected Period)</h4>
+                                <div style="height: 250px; position: relative;">
+                                    <canvas id="commissionDailyChart"></canvas>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Monthly
+                                    Commission (Last 6 Months)</h4>
+                                <div style="height: 250px; position: relative;">
+                                    <canvas id="commissionMonthlyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Technician Performance Details</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="mgrTechCommissions" class="activity-list"></div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline btn-block" id="btnShowStockReport">Show Stock Value Report</button>
+                    <div id="mgrStockReportContainer" style="display: none; margin-top: 1rem;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Stock Value Detailed Report</h3>
+                                <strong id="mgrTotalStockValue">Total: Rs. 0</strong>
+                            </div>
+                            <div class="card-body" style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
+                                    <thead>
+                                        <tr style="text-align: left; border-bottom: 2px solid var(--border);">
+                                            <th style="padding: 1rem;">Product</th>
+                                            <th style="padding: 1rem;">Price</th>
+                                            <th style="padding: 1rem;">Qty</th>
+                                            <th style="padding: 1rem; text-align: right;">Total Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mgrStockReportTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- User Management View -->
+                <section id="managerUsersView" class="view">
+                    <div class="page-header">
+                        <h2>User Management</h2>
+                        <p class="page-subtitle">Manage shop staff</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>All Users</h3>
+                            <button class="btn btn-primary btn-sm" onclick="app.openUserModal()">+ Add User</button>
+                        </div>
+                        <div class="card-body">
+                            <div id="mgrUsersList" class="activity-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Warranty View -->
+                <section id="managerWarrantyView" class="view">
+                    <div class="page-header">
+                        <h2>Warranty Tracking</h2>
+                        <p class="page-subtitle">Manage devices sent to external service centers</p>
+                    </div>
+
+                    <div class="tabs-container"
+                        style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-md);">
+                        <button class="tab-btn active" id="btnWarrantyActiveTab"
+                            onclick="app.switchWarrantyTab('active')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">Active
+                            Tracking</button>
+                        <button class="tab-btn" id="btnWarrantyHistoryTab" onclick="app.switchWarrantyTab('history')"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; transition: all 0.2s; font-weight: 600;">History</button>
+                    </div>
+
+                    <div id="warrantyActiveSection">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Collect Device for Warranty</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="mgrWarrantyForm" class="form"
+                                    onsubmit="event.preventDefault(); app.handleWarrantySubmit();">
+                                    <input type="hidden" id="warJobId">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="warCustName">Customer Name</label>
+                                            <input type="text" id="warCustName" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="warCustPhone">Customer Phone</label>
+                                            <input type="tel" id="warCustPhone" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="warBrandSelect">Brand</label>
+                                            <select id="warBrandSelect" required
+                                                style="width: 100%; padding: var(--spacing-md); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-primary);"
+                                                onchange="app.toggleWarrantyBrandInput(this)">
+                                                <option value="">-- Select Brand --</option>
+                                                <option value="__other__">🆕 Other (type new)</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="warModelSelect">Model</label>
+                                            <select id="warModelSelect" required
+                                                style="width: 100%; padding: var(--spacing-md); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-primary);"
+                                                onchange="app.toggleWarrantyModelInput(this)">
+                                                <option value="">-- Select Model --</option>
+                                                <option value="__other__">🆕 Other (type new)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" id="warBrandModelCustomContainer" style="display: none;">
+                                        <div class="form-group" id="warBrandCustomContainer" style="display: none;">
+                                            <label for="warBrandCustom">Brand Name</label>
+                                            <input type="text" id="warBrandCustom" placeholder="Enter brand name">
+                                        </div>
+                                        <div class="form-group" id="warModelCustomContainer" style="display: none;">
+                                            <label for="warModelCustom">Model Name</label>
+                                            <input type="text" id="warModelCustom" placeholder="Enter model name">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="warIMEI">IMEI Number</label>
+                                        <input type="text" id="warIMEI" required placeholder="Enter IMEI number">
+                                    </div>
+                                    <div class="form-row" id="warRepContainer" style="display: none;">
+                                        <div class="form-group">
+                                            <label for="warRepName">Representative Name</label>
+                                            <input type="text" id="warRepName" placeholder="Sales Rep Name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="warRepPhone">Rep Phone (WhatsApp)</label>
+                                            <input type="tel" id="warRepPhone" placeholder="077xxxxxxx">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="warProblemSelect">Problem Description</label>
+                                        <select id="warProblemSelect" required
+                                            style="width: 100%; padding: var(--spacing-md); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-primary);"
+                                            onchange="app.toggleWarrantyProblemInput(this)">
+                                            <option value="">-- Select Problem --</option>
+                                            <option value="__other__">🆕 Other (type new)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" id="warProblemCustomContainer" style="display: none;">
+                                        <label for="warProblemCustom">Describe New Problem</label>
+                                        <textarea id="warProblemCustom" rows="2"
+                                            style="width: 100%; padding: var(--spacing-md); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-primary);"
+                                            placeholder="Enter problem description..."></textarea>
+                                    </div>
+                                    <button type="submit" id="warSubmitBtn" class="btn btn-primary btn-block">Collect &
+                                        Record</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Active Tracking</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="search-bar" style="margin-bottom: 1rem;">
+                                    <input type="text" id="warSearch"
+                                        placeholder="🔍 Search by name, brand, IMEI or Rep..."
+                                        oninput="app.renderManagerWarranty(this.value)">
+                                </div>
+                                <div id="mgrWarrantyList" class="activity-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="warrantyHistorySection" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>All Warranty History</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="mgrWarrantyHistoryList" class="activity-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings View -->
+                <section id="managerSettingsView" class="view">
+                    <div class="page-header" id="settingsTop">
+                        <h2>Settings</h2>
+                        <p class="page-subtitle">System configuration</p>
+                    </div>
+
+                    <!-- System Configuration Buttons -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.125rem; margin-bottom: 1rem; color: var(--text-secondary);">System
+                            Configuration</h3>
+                    </div>
+
+                    <div class="quick-nav-grid">
+                        <button class="nav-btn" onclick="app.toggleShopProfile()">
+                            <span class="nav-btn-icon">🏪</span>
+                            <span class="nav-btn-label">Shop Profile</span>
+                        </button>
+                        <button class="nav-btn" onclick="app.switchManagerView('users')">
+                            <span class="nav-btn-icon">👥</span>
+                            <span class="nav-btn-label">User Management</span>
+                        </button>
+                        <button class="nav-btn"
+                            onclick="document.getElementById('dataManagementSection').scrollIntoView({behavior: 'smooth'})">
+                            <span class="nav-btn-icon">💾</span>
+                            <span class="nav-btn-label">Data Backup</span>
+                        </button>
+                        <button class="nav-btn" onclick="app.logout()">
+                            <span class="nav-btn-icon">🚪</span>
+                            <span class="nav-btn-label">Logout</span>
+                        </button>
+                    </div>
+
+                    <!-- Shop Profile Card -->
+                    <div class="card" id="shopProfileSection" style="margin-top: 2rem; display: none;">
+                        <div class="card-header">
+                            <h3>Shop Profile</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="settingsForm" class="form">
+                                <div class="form-group">
+                                    <label for="setShopName">Shop Name</label>
+                                    <input type="text" id="setShopName">
+                                </div>
+                                <div class="form-group">
+                                    <label>Shop Logo</label>
+                                    <div class="logo-upload-container">
+                                        <div id="shopLogoPreview" class="logo-preview">⭐</div>
+                                        <label for="shopLogoInput" class="btn btn-outline btn-sm">Change Logo</label>
+                                        <input type="file" id="shopLogoInput" accept="image/*" style="display: none;">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="setShopPhone">Contact Phone</label>
+                                        <input type="tel" id="setShopPhone">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="setShopEmail">Shop Email</label>
+                                        <input type="email" id="setShopEmail">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="setShopAddress">Shop Address</label>
+                                    <input type="text" id="setShopAddress">
+                                </div>
+                                <div class="form-group">
+                                    <label for="setCurrency">Currency Symbol</label>
+                                    <input type="text" id="setCurrency" placeholder="e.g. Rs.">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="setLowStock">Low Stock Alert Level</label>
+                                        <input type="number" id="setLowStock">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="setCommission">Technician Commission %</label>
+                                        <input type="number" id="setCommission">
+                                    </div>
+                                </div>
+
+                                <h3
+                                    style="margin: 1.5rem 0 1rem; font-size: 1.1rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                                    Change Password</h3>
+                                <div class="form-group">
+                                    <label for="oldPassword">Current Password</label>
+                                    <input type="password" id="oldPassword">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="newPassword">New Password</label>
+                                        <input type="password" id="newPassword">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="confirmPassword">Confirm Password</label>
+                                        <input type="password" id="confirmPassword">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline btn-block" style="margin-bottom: 1rem;"
+                                    onclick="app.handlePasswordChange()">Update Password</button>
+
+                                <button type="submit" class="btn btn-primary btn-block">Save Shop Settings</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card" id="dataManagementSection">
+                        <div class="card-header">
+                            <h3>Data Management</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <button type="button" class="btn btn-outline" id="exportDataBtn">📥 Backup Data (Export
+                                    JSON)</button>
+                                <label for="restoreDataInput" class="btn btn-outline"
+                                    style="text-align: center; cursor: pointer;">📤 Restore Data (Import JSON)</label>
+                                <input type="file" id="restoreDataInput" accept=".json" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" data-view="dashboard" onclick="app.switchManagerView('dashboard')">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="approvals" onclick="app.switchManagerView('approvals')">
+                    <span class="nav-icon">✓</span>
+                    <span class="nav-label">Approvals</span>
+                    <span class="nav-badge" id="approvalsNavBadge">0</span>
+                </button>
+                <button class="nav-item" data-view="sales" onclick="app.switchManagerView('sales')">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-label">Stocks</span>
+                </button>
+                <button class="nav-item" data-view="credits" onclick="app.switchManagerView('credits')">
+                    <span class="nav-icon">💳</span>
+                    <span class="nav-label">Credits</span>
+                </button>
+                <button class="nav-item" data-view="warranty" onclick="app.switchManagerView('warranty')">
+                    <span class="nav-icon">🛡️</span>
+                    <span class="nav-label">Warranty</span>
+                </button>
+                <button class="nav-item" data-view="reports" onclick="app.switchManagerView('reports')">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Reports</span>
+                </button>
+                <button class="nav-item" data-view="settings" onclick="app.switchManagerView('settings')">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Settings</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Technician Dashboard -->
+        <div id="technicianScreen" class="screen">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-content">
+                    <div class="header-left">
+                        <div class="logo">⭐</div>
+                        <div>
+                            <h1 class="app-title">Starcity</h1>
+                            <p class="user-role" id="techName">Technician</p>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <button class="icon-btn" id="techNotificationBtn">
+                            <span class="notification-badge" id="techNotificationBadge">0</span>
+                            🔔
+                        </button>
+                        <button class="icon-btn" id="techLogoutBtn">🚪</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="main-content" id="techContent">
+                <!-- Dashboard View -->
+                <section id="techDashboardView" class="view active">
+                    <div class="page-header">
+                        <h2>My Dashboard</h2>
+                        <p class="page-subtitle">Your performance</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card primary">
+                            <div class="stat-icon">🔧</div>
+                            <div class="stat-info">
+                                <p class="stat-label">My Jobs (Month)</p>
+                                <h3 class="stat-value" id="techMonthlyJobs">0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-info">
+                                <p class="stat-label">Pending Approval</p>
+                                <h3 class="stat-value" id="techPendingJobs">0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-icon">💵</div>
+                            <div class="stat-info">
+                                <p class="stat-label">My Commission</p>
+                                <h3 class="stat-value" id="techCommission">Rs. 0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card danger">
+                            <div class="stat-icon">✅</div>
+                            <div class="stat-info">
+                                <p class="stat-label">Approved Jobs</p>
+                                <h3 class="stat-value" id="techApprovedJobs">0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>My Recent Jobs</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="techRecentJobs" class="jobs-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- My Jobs View -->
+                <section id="techJobsView" class="view">
+                    <div class="page-header">
+                        <h2>My Repair Jobs</h2>
+                        <p class="page-subtitle">All your jobs</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-filter="all"
+                                    onclick="app.filterTechJobs('all')">All</button>
+                                <button class="filter-btn" data-filter="Pending"
+                                    onclick="app.filterTechJobs('Pending')">Pending</button>
+                                <button class="filter-btn" data-filter="Completed"
+                                    onclick="app.filterTechJobs('Completed')">Completed</button>
+                                <button class="filter-btn" data-filter="Approved"
+                                    onclick="app.filterTechJobs('Approved')">Approved</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="techAllJobs" class="jobs-list"></div>
+                </section>
+
+                <!-- New Job View -->
+                <section id="techNewJobView" class="view">
+                    <div class="page-header">
+                        <h2>New Repair Job</h2>
+                        <p class="page-subtitle">Enter repair details</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <form id="techNewJobForm" class="form">
+                                <div class="form-group">
+                                    <label for="techJobCustomer">Customer Name *</label>
+                                    <input type="text" id="techJobCustomer" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="techJobPhone">Customer Phone *</label>
+                                    <input type="tel" id="techJobPhone" required>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="techJobBrand">Device Brand *</label>
+                                        <select id="techJobBrand" required onchange="app.toggleCustomRepairBrand(this)">
+                                            <option value="">-- Select Brand --</option>
+                                            <option value="Samsung">Samsung</option>
+                                            <option value="Apple">Apple</option>
+                                            <option value="Xiaomi">Xiaomi</option>
+                                            <option value="Oppo">Oppo</option>
+                                            <option value="Vivo">Vivo</option>
+                                            <option value="Realme">Realme</option>
+                                            <option value="OnePlus">OnePlus</option>
+                                            <option value="__custom__">➕ Add New Brand...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="techJobModel">Model *</label>
+                                        <select id="techJobModel" required onchange="app.toggleCustomRepairModel(this)">
+                                            <option value="">-- Select Model --</option>
+                                            <option value="__custom__">➕ Add New Model...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group" id="customRepairBrandDiv" style="display: none;">
+                                        <label for="customRepairBrand">Custom Brand Name</label>
+                                        <input type="text" id="customRepairBrand" placeholder="Enter new brand name">
+                                    </div>
+                                    <div class="form-group" id="customRepairModelDiv" style="display: none;">
+                                        <label for="customRepairModel">Custom Model Name</label>
+                                        <input type="text" id="customRepairModel" placeholder="Enter new model name">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="techJobProblem">Problem Description *</label>
+                                    <select id="techJobProblem" required onchange="app.toggleCustomRepairProblem(this)">
+                                        <option value="">-- Select Problem --</option>
+                                        <option value="Screen Broken">Screen Broken</option>
+                                        <option value="Battery Issue">Battery Issue</option>
+                                        <option value="Charging Port">Charging Port</option>
+                                        <option value="Water Damage">Water Damage</option>
+                                        <option value="Software Issue">Software Issue</option>
+                                        <option value="Speaker/Mic Issue">Speaker/Mic Issue</option>
+                                        <option value="Camera Issue">Camera Issue</option>
+                                        <option value="__custom__">➕ Add New Problem...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="customRepairProblemDiv" style="display: none;">
+                                    <label for="customRepairProblem">Custom Problem Description</label>
+                                    <input type="text" id="customRepairProblem"
+                                        placeholder="Enter new problem description">
+                                </div>
+                                <div class="form-group">
+                                    <label for="techJobCost">Repair Cost (Rs.) *</label>
+                                    <input type="number" id="techJobCost" step="0.01" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Parts Needed (From Stock)</label>
+                                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <select id="techJobPartSelect" style="flex: 2;">
+                                            <option value="">-- Select Part --</option>
+                                        </select>
+                                        <input type="number" id="techJobPartQty" min="1" value="1" placeholder="Qty"
+                                            style="width: 80px;">
+                                        <button type="button" onclick="app.addPartToRepair()"
+                                            class="btn btn-sm btn-outline">+ Add</button>
+                                    </div>
+                                    <div id="selectedPartsList"
+                                        style="display: none; padding: 0.5rem; background: var(--bg-secondary); border-radius: var(--radius-sm); margin-top: 0.5rem;">
+                                        <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;">
+                                            Selected Parts:</div>
+                                        <div id="selectedPartsItems"></div>
+                                    </div>
+                                    <input type="hidden" id="techJobParts">
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select id="techJobStatus">
+                                        <option value="Pending">Pending</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Submit Job</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Earnings View -->
+                <section id="techEarningsView" class="view">
+                    <div class="page-header">
+                        <h2>My Earnings</h2>
+                        <p class="page-subtitle">Commission details</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>This Month</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="earnings-summary">
+                                <div class="earnings-item">
+                                    <span>Total Commission:</span>
+                                    <strong id="techTotalCommission">Rs. 0</strong>
+                                </div>
+                                <div class="earnings-item">
+                                    <span>Approved Jobs:</span>
+                                    <strong id="techApprovedCount">0</strong>
+                                </div>
+                                <div class="earnings-item">
+                                    <span>Pending Approval:</span>
+                                    <strong id="techPendingCount">0</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>Customer Debts</h3>
+                            <button class="btn btn-primary btn-sm" onclick="app.showManualCreditModal()">➕ Add
+                                Entry</button>
+                        </div>
+                        <div class="card-body">
+                            <div id="mgrCustomerCreditsList" class="list"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Approved Jobs</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="techApprovedJobsList" class="jobs-list"></div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" data-view="dashboard" onclick="app.switchTechView('dashboard')">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="jobs" onclick="app.switchTechView('jobs')">
+                    <span class="nav-icon">🔧</span>
+                    <span class="nav-label">My Jobs</span>
+                </button>
+                <button class="nav-item" data-view="newjob" onclick="app.switchTechView('newjob')">
+                    <span class="nav-icon">➕</span>
+                    <span class="nav-label">New Job</span>
+                </button>
+                <button class="nav-item" data-view="earnings" onclick="app.switchTechView('earnings')">
+                    <span class="nav-icon">💵</span>
+                    <span class="nav-label">Earnings</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- User Management Modal (NEW) -->
+        <div id="userModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="userModalTitle">Add New User</h3>
+                    <button class="modal-close" onclick="app.closeModal('userModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm" class="form">
+                        <input type="hidden" id="userId">
+                        <div class="form-group">
+                            <label for="userName">Full Name *</label>
+                            <input type="text" id="userName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userUsername">Username *</label>
+                            <input type="text" id="userUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userPassword">Password *</label>
+                            <input type="text" id="userPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userRole">Role</label>
+                            <select id="userRole">
+                                <option value="technician">Technician</option>
+                                <option value="manager">Manager</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="userActive" checked style="width: auto;">
+                            <label for="userActive">Account Active</label>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline"
+                                onclick="app.closeModal('userModal')">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="userSubmitBtn">Create User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Product Modal -->
+        <div id="addProductModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="addProductModalTitle">Add New Product</h3>
+                    <button class="close-btn" onclick="app.closeModal('addProductModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProductForm" class="form">
+                        <input type="hidden" id="productId">
+                        <div class="form-group">
+                            <label>Product Image</label>
+                            <div class="image-upload-container">
+                                <label for="productImageInput" class="image-upload-label">
+                                    <p id="imagePreviewText">Tap to upload photo</p>
+                                    <img id="imagePreview" src="" alt="Preview" style="display: none;">
+                                </label>
+                                <input type="file" id="productImageInput" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="productName">Product Name *</label>
+                            <input type="text" id="productName" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productCategory">Category *</label>
+                                <select id="productCategory" required onchange="app.toggleCustomProductCategory(this)">
+                                    <option value="Phones">Phones</option>
+                                    <option value="Accessories">Accessories</option>
+                                    <option value="Parts">Parts</option>
+                                    <option value="__custom__">➕ Add New Category...</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="customProductCategoryDiv" style="display: none;">
+                                <label for="customProductCategory">Custom Category Name</label>
+                                <input type="text" id="customProductCategory" placeholder="Enter new category name">
+                            </div>
+                            <div class="form-group">
+                                <label for="productBrand">Brand</label>
+                                <select id="productBrand" onchange="app.toggleCustomProductBrand(this)">
+                                    <option value="">-- Select Brand --</option>
+                                    <option value="Samsung">Samsung</option>
+                                    <option value="Apple">Apple</option>
+                                    <option value="Xiaomi">Xiaomi</option>
+                                    <option value="Oppo">Oppo</option>
+                                    <option value="Vivo">Vivo</option>
+                                    <option value="Realme">Realme</option>
+                                    <option value="OnePlus">OnePlus</option>
+                                    <option value="__custom__">➕ Add New Brand...</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="customProductBrandDiv" style="display: none;">
+                                <label for="customProductBrand">Custom Brand Name</label>
+                                <input type="text" id="customProductBrand" placeholder="Enter new brand name">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="productDescription">Description</label>
+                                <textarea id="productDescription" rows="3" placeholder="Optional product description"
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: inherit;"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productQty">Quantity *</label>
+                                <input type="number" id="productQty" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="productMinQty">Min Qty</label>
+                                <input type="number" id="productMinQty" value="5">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productCost">Cost (Rs.) *</label>
+                                <input type="number" id="productCost" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="productPrice">Price (Rs.) *</label>
+                                <input type="number" id="productPrice" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline"
+                                onclick="app.closeModal('addProductModal')">Cancel</button>
+                            <button type="submit" class="btn btn-primary btn-block" id="addProductSubmitBtn">Add
+                                Product</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Detail Modal -->
+        <div id="productDetailModal" class="modal">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3>Product Details</h3>
+                    <button class="close-btn" onclick="app.closeModal('productDetailModal')">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 1rem;">
+                    <div id="productDetailContent" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                    <div style="display: flex; gap: 0.6rem; margin-top: 1rem;">
+                        <button class="btn btn-primary btn-block" id="productDetailEditBtn"
+                            onclick="app.editFromDetail()">
+                            ✏️ Edit Product
+                        </button>
+                        <button class="btn btn-outline" onclick="app.closeModal('productDetailModal')">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Expense Modal -->
+        <div id="addExpenseModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Expense</h3>
+                    <button class="close-btn" onclick="app.closeModal('addExpenseModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="mgrExpenseForm" class="form" onsubmit="event.preventDefault(); app.addExpense();">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="expAmount">Amount (Rs.)</label>
+                                <input type="number" id="expAmount" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="expCategory">Category</label>
+                                <select id="expCategory" required>
+                                    <option value="Rent">Rent</option>
+                                    <option value="Electricity">Electricity</option>
+                                    <option value="Salaries">Salaries</option>
+                                    <option value="Lunch/Bills">Lunch/Bills</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="expReason">Reason / Description</label>
+                            <input type="text" id="expReason" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Add Expense</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendor Modal -->
+        <div id="addVendorModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Vendor</h3>
+                    <button class="btn-close" onclick="app.closeModal('addVendorModal')">×</button>
+                </div>
+                <form id="addVendorForm" class="form">
+                    <div class="form-group">
+                        <label for="vendorName">Vendor Name</label>
+                        <input type="text" id="vendorName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vendorPhone">Phone Number</label>
+                        <input type="tel" id="vendorPhone">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Add Vendor</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Manual Credit Modal (NEW) -->
+        <div id="manualCreditModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Record Customer Credit</h3>
+                    <button class="close-btn" onclick="app.closeModal('manualCreditModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="manualCreditForm" class="form">
+                        <div class="form-group">
+                            <label for="manCredName">Customer Name</label>
+                            <input type="text" id="manCredName" required placeholder="Full Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="manCredPhone">Phone Number</label>
+                            <input type="tel" id="manCredPhone" placeholder="07x xxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label for="manCredAmount">Credit Amount (Rs.)</label>
+                            <input type="number" id="manCredAmount" required min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="manCredReason">Reason (Optional)</label>
+                            <input type="text" id="manCredReason" placeholder="e.g. Purchase from Shop">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Set Credit Balance</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendor Purchase Modal -->
+        <div id="addVendorPurchaseModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Record Credit Purchase</h3>
+                    <button class="btn-close" onclick="app.closeModal('addVendorPurchaseModal')">×</button>
+                </div>
+                <form id="vendorPurchaseForm" class="form">
+                    <input type="hidden" id="purchaseVendorId">
+                    <div class="form-group">
+                        <label for="purchaseProduct">Product/Description</label>
+                        <input type="text" id="purchaseProduct" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="purchaseAmount">Total Amount (Rs.)</label>
+                            <input type="number" id="purchaseAmount" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="purchaseDate">Due Date</label>
+                            <input type="date" id="purchaseDate">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Record Debt</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Customer Payment Modal -->
+        <div id="customerPaymentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Record Customer Payment</h3>
+                    <button class="btn-close" onclick="app.closeModal('customerPaymentModal')">×</button>
+                </div>
+                <form id="customerPaymentForm" class="form">
+                    <input type="hidden" id="paymentCustomerId">
+                    <div class="form-group">
+                        <label>Amount (Rs.)</label>
+                        <input type="number" id="paymentAmount" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Record Payment</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Vendor Payment Modal -->
+        <div id="vendorPaymentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Record Vendor Payment</h3>
+                    <button class="btn-close" onclick="app.closeModal('vendorPaymentModal')">×</button>
+                </div>
+                <form id="vendorPaymentForm" class="form">
+                    <input type="hidden" id="vPaymentVendorId">
+                    <div class="form-group">
+                        <label>Amount (Rs.)</label>
+                        <input type="number" id="vPaymentAmount" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Record Payment</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Warranty Status Confirmation Modal -->
+        <div id="warrantyStatusModal" class="modal">
+            <div class="modal-content" style="max-width: 400px; text-align: center;">
+                <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                    <h3 id="approvalTitle">Confirm Status Update</h3>
+                </div>
+                <div class="modal-body">
+                    <p id="warrantyStatusMsg" style="color: var(--text-secondary); margin-bottom: 1.5rem;">Are you sure
+                        you
+                        want to update the status?</p>
+                    <input type="hidden" id="pendingWarrantyId">
+                    <input type="hidden" id="pendingWarrantyStatus">
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button class="btn btn-outline" style="flex: 1;"
+                            onclick="app.closeModal('warrantyStatusModal')">Cancel</button>
+                        <button class="btn btn-primary" style="flex: 1;"
+                            onclick="app.processWarrantyStatusUpdate()">Confirm
+                            Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warranty Rep Assignment Modal -->
+        <div id="warrantyRepModal" class="modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h3>Assign Sales Representative</h3>
+                    <button class="close-btn" onclick="app.closeModal('warrantyRepModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        Device is being sent to service center. Please provide sales rep details for notification:
+                    </p>
+                    <form id="warrantyRepForm" class="form"
+                        onsubmit="event.preventDefault(); app.saveWarrantyRepInfo();">
+                        <input type="hidden" id="repAssignWarrantyId">
+                        <div class="form-group">
+                            <label for="warRepNameInput">Sales Rep Name *</label>
+                            <input type="text" id="warRepNameInput" required placeholder="e.g. Kamal">
+                        </div>
+                        <div class="form-group">
+                            <label for="warRepPhoneInput">Rep WhatsApp Number *</label>
+                            <input type="tel" id="warRepPhoneInput" required placeholder="0771234567">
+                        </div>
+                        <div class="modal-footer" style="display: flex; gap: 1rem;">
+                            <button type="button" class="btn btn-outline" style="flex: 1;"
+                                onclick="app.closeModal('warrantyRepModal')">Cancel</button>
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">Save & Continue</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Modal -->
+        <div id="userModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="userModalTitle">Add New User</h3>
+                    <button class="modal-close" onclick="app.closeModal('userModal')">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm" onsubmit="event.preventDefault(); app.handleUserSubmit();">
+                        <input type="hidden" id="editUserId">
+                        <div class="form-group">
+                            <label for="userUsername">Username *</label>
+                            <input type="text" id="userUsername" required placeholder="e.g. tech2">
+                        </div>
+                        <div class="form-group">
+                            <label for="userPassword">Password *</label>
+                            <input type="password" id="userPassword" required placeholder="Enter password">
+                            <small style="color: var(--text-muted); font-size: 0.85rem;">Leave blank when editing to
+                                keep
+                                existing password</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="userName">Full Name *</label>
+                            <input type="text" id="userName" required placeholder="e.g. John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="userRole">Role *</label>
+                            <select id="userRole" required
+                                style="width: 100%; padding: var(--spacing-md); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-primary);">
+                                <option value="">-- Select Role --</option>
+                                <option value="manager">Manager</option>
+                                <option value="technician">Technician</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="userPhone">Phone Number</label>
+                            <input type="tel" id="userPhone" placeholder="0771234567">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline"
+                                onclick="app.closeModal('userModal')">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Credit History Modal -->
+        <div id="creditHistoryModal" class="modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 id="creditHistoryTitle">Transaction History</h3>
+                    <button class="modal-close" onclick="app.closeModal('creditHistoryModal')">×</button>
+                </div>
+                <div class="modal-body">
+                    <div id="creditHistoryContent" style="max-height: 60vh; overflow-y: auto;">
+                        <!-- History will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Credit Modal -->
+        <div id="addCreditModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Customer Credit</h3>
+                    <button class="modal-close" onclick="app.closeModal('addCreditModal')">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCreditForm" onsubmit="event.preventDefault(); app.handleCreditSubmit();">
+                        <div class="form-group">
+                            <label>Customer Name *</label>
+                            <input type="text" id="creditCustomerName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="creditPhone">
+                        </div>
+                        <div class="form-group">
+                            <label>Credit Amount *</label>
+                            <input type="number" id="creditAmount" required min="1">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline"
+                                onclick="app.closeModal('addCreditModal')">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add Credit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Vendor Credit Modal -->
+        <div id="addVendorCreditModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Vendor Credit</h3>
+                    <button class="modal-close" onclick="app.closeModal('addVendorCreditModal')">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addVendorCreditForm" onsubmit="event.preventDefault(); app.handleVendorCreditSubmit();">
+                        <div class="form-group">
+                            <label>Vendor Name *</label>
+                            <input type="text" id="vendorCreditName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="vendorCreditPhone">
+                        </div>
+                        <div class="form-group">
+                            <label>Credit Amount *</label>
+                            <input type="number" id="vendorCreditAmount" required min="1">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline"
+                                onclick="app.closeModal('addVendorCreditModal')">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add Credit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Modal -->
+        <div id="userModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="userModalTitle">Add New User</h3>
+                    <button class="modal-close" onclick="app.closeModal('userModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm" onsubmit="event.preventDefault(); app.handleUserSubmit();">
+                        <input type="hidden" id="editUserId">
+                        <div class="form-group">
+                            <label for="userUsername">Username *</label>
+                            <input type="text" id="userUsername" required placeholder="e.g. tech2">
+                        </div>
+                        <div class="form-group">
+                            <label for="userPassword">Password *</label>
+                            <input type="password" id="userPassword" required placeholder="Enter password">
+                            <small style="color: var(--text-muted); font-size: 0.85rem;">Leave blank when editing to
+                                keep existing password</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="userName">Full Name *</label>
+                            <input type="text" id="userName" required placeholder="e.g. John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="userRole">Role *</label>
+                            <select id="userRole" required
+                                style="width: 100%; padding: var(--spacing-md); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-primary);">
+                                <option value="">-- Select Role --</option>
+                                <option value="manager">Manager</option>
+                                <option value="technician">Technician</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="userPhone">Phone Number</label>
+                            <input type="tel" id="userPhone" placeholder="0771234567">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline"
+                                onclick="app.closeModal('userModal')">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Worker Registration -->
+        <script>
+            // Register service worker for PWA offline support
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/service-worker.js')
+                        .then(reg => console.log('✓ Service Worker registered'))
+                        .catch(err => console.log('Service Worker registration failed:', err));
+                });
+            }
+        </script>
+
+        <script src="app.js"></script>
+</body>
+
+</html>
