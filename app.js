@@ -1495,18 +1495,30 @@ class StarcityApp {
         }
 
         const processProduct = (imageData) => {
+            const productData = {
+                name,
+                category,
+                brand,
+                quantity,
+                minQty: minQuantity,
+                costPrice: cost,
+                sellingPrice: price,
+                image: imageData || null
+            };
+
             if (productId) {
                 // Update existing product
                 const product = this.stock.find(p => p.id == productId);
                 if (product) {
-                    product.name = name;
-                    product.category = category;
-                    product.brand = brand;
-                    product.quantity = quantity;
-                    product.minQuantity = minQuantity;
-                    product.cost = cost;
-                    product.price = price;
+                    Object.assign(product, { name, category, brand, quantity, minQuantity, cost, price });
                     if (imageData) product.image = imageData;
+
+                    // Call backend updateProduct
+                    if (window.syncManager) {
+                        window.syncManager.callBackend('updateProduct', [productId, productData])
+                            .then(() => console.log('Product updated in backend'))
+                            .catch(err => console.warn('Backend update failed:', err));
+                    }
 
                     this.saveData('stock');
                     this.showToast('✓ Product updated successfully');
@@ -1514,22 +1526,27 @@ class StarcityApp {
                     this.renderManagerStock();
                 }
             } else {
-                // Add new product
-                const newProduct = {
-                    id: Date.now(),
-                    name,
-                    category,
-                    brand,
-                    quantity,
-                    minQuantity,
-                    cost,
-                    price,
-                    image: imageData || null
-                };
+                // Add new product - call backend directly
+                if (window.syncManager) {
+                    window.syncManager.callBackend('addProduct', [productData])
+                        .then(result => {
+                            console.log('Product added to backend:', result);
+                            // Reload stock from backend
+                            this.initData();
+                            this.showToast('✓ Product added successfully');
+                        })
+                        .catch(err => {
+                            console.error('Failed to add product:', err);
+                            this.showToast('❌ Failed to add product');
+                        });
+                } else {
+                    // Fallback to local
+                    const newProduct = { id: Date.now(), name, category, brand, quantity, minQuantity, cost, price, image: imageData || null };
+                    this.stock.push(newProduct);
+                    this.saveData('stock');
+                    this.showToast('✓ Product added locally (offline)');
+                }
 
-                this.stock.push(newProduct);
-                this.saveData('stock');
-                this.showToast('✓ Product added successfully');
                 this.closeModal('addProductModal');
                 this.renderManagerStock();
             }
