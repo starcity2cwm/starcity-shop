@@ -130,24 +130,49 @@ class SyncManager {
     }
 
     /**
-     * Call Google Apps Script backend
+     * Call Google Apps Script backend using JSONP (bypasses CORS)
      */
     async callBackend(functionName, args = []) {
-        // Use GET with parameters in URL to avoid CORS preflight
-        const params = new URLSearchParams({
-            function: functionName,
-            arguments: JSON.stringify(args)
+        return new Promise((resolve, reject) => {
+            // Generate unique callback name
+            const callbackName = 'jsonp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+            // Create global callback function
+            window[callbackName] = function (data) {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                resolve(data);
+            };
+
+            // Build URL with JSONP callback
+            const params = new URLSearchParams({
+                function: functionName,
+                arguments: JSON.stringify(args),
+                callback: callbackName
+            });
+
+            // Create script tag for JSONP request
+            const script = document.createElement('script');
+            script.src = `${this.scriptUrl}?${params}`;
+            script.onerror = () => {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                reject(new Error('JSONP request failed'));
+            };
+
+            // Add timeout to prevent hanging
+            setTimeout(() => {
+                if (window[callbackName]) {
+                    delete window[callbackName];
+                    if (script.parentNode) {
+                        document.body.removeChild(script);
+                    }
+                    reject(new Error('Request timeout'));
+                }
+            }, 30000); // 30 second timeout
+
+            document.body.appendChild(script);
         });
-
-        const response = await fetch(`${this.scriptUrl}?${params}`, {
-            method: 'GET'
-        });
-
-        if (!response.ok) {
-            throw new Error('Backend call failed');
-        }
-
-        return await response.json();
     }
 
     /**
