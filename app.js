@@ -3178,17 +3178,31 @@ Thank you!`;
 
         if (editId) {
             // Editing existing user
-            const index = this.users.findIndex(u => u.id === editId || u.username === editId);
+            const index = this.users.findIndex(u => u.id === editId || u.username === editId || u.userid === editId);
             if (index !== -1) {
-                // Keep existing ID and password if not changed
-                userData.id = this.users[index].id;
+                // Keep existing ID
+                const userId = this.users[index].userid || this.users[index].id;
                 userData.password = password ? password : this.users[index].password;
 
                 // Update current user if editing self
                 if (this.currentUser && (this.currentUser.id === editId || this.currentUser.username === editId)) {
                     Object.assign(this.currentUser, userData);
                 }
-                this.users[index] = userData;
+
+                // Update locally
+                this.users[index] = { ...this.users[index], ...userData };
+
+                // Call backend updateUser function
+                if (window.syncManager) {
+                    window.syncManager.callBackend('updateUser', [userId, userData])
+                        .then(() => {
+                            console.log('User updated in backend');
+                            // Reload users from backend to stay in sync
+                            this.initData();
+                        })
+                        .catch(err => console.warn('Backend update failed, will retry:', err));
+                }
+
                 this.showToast('✓ User updated successfully!');
             }
         } else {
@@ -3201,13 +3215,31 @@ Thank you!`;
                 this.showToast('❌ Password is required for new users!');
                 return;
             }
-            userData.id = 'user_' + Date.now();
+
             userData.password = password;
-            this.users.push(userData);
-            this.showToast('✓ User created successfully!');
+
+            // Call backend addUser function instead of local save
+            if (window.syncManager) {
+                window.syncManager.callBackend('addUser', [userData])
+                    .then(result => {
+                        console.log('User added to backend:', result);
+                        // Reload all users from backend to get the new user with correct ID
+                        this.initData();
+                        this.showToast('✓ User created successfully!');
+                    })
+                    .catch(err => {
+                        console.error('Failed to add user to backend:', err);
+                        this.showToast('❌ Failed to create user. Check console.');
+                    });
+            } else {
+                // Fallback to local only if syncManager not available
+                userData.id = 'user_' + Date.now();
+                this.users.push(userData);
+                this.saveData('users');
+                this.showToast('✓ User created locally (offline)');
+            }
         }
 
-        this.saveData('users');
         this.closeModal('userModal');
         this.renderUsers();
     }
