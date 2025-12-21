@@ -1569,14 +1569,43 @@ body {
         max-width: 100% !important;
     }
 
-    /* Fix stat cards */
+    /* Fix stat cards - dashboard cards */
     .stat-card,
-    .stats-grid .card {
+    .stats-grid .card,
+    .card {
         padding: var(--spacing-sm) !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
     }
 
-    .stat-value {
-        font-size: 1.25rem !important;
+    /* Dashboard stat value and label */
+    .stat-value,
+    .card h3,
+    .card .stat-value {
+        font-size: 1rem !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+
+    .stat-label,
+    .card h4,
+    .card span {
+        font-size: 0.7rem !important;
+        word-wrap: break-word !important;
+    }
+
+    /* Stat grid fix */
+    .stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Make sure numbers don't overflow */
+    .stats-grid .card,
+    .stat-card {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 
     /* Fix text overflow */
