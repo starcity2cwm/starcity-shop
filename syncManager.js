@@ -155,7 +155,20 @@ class SyncManager {
             `;
             document.body.appendChild(loader);
         }
-        loader.innerHTML = `<span style="animation: spin 1s linear infinite; display: inline-block;">⏳</span> ${message}`;
+        loader.innerHTML = `
+            <span style="animation: spin 1s linear infinite; display: inline-block;">⏳</span> 
+            ${message}
+            <button onclick="window.syncManager.hideLoading()" style="
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.75rem;
+                margin-left: 0.5rem;
+            ">✕</button>
+        `;
         loader.style.display = 'flex';
     }
 
@@ -170,15 +183,29 @@ class SyncManager {
     async callBackend(functionName, args = [], showLoader = true) {
         if (showLoader) this.showLoading('Syncing data...');
 
+        // Safety timeout to auto-hide loader after 20 seconds no matter what
+        const safetyTimeout = setTimeout(() => {
+            this.hideLoading();
+            console.warn('Safety timeout: Force hiding loader');
+        }, 20000);
+
         return new Promise((resolve, reject) => {
             // Generate unique callback name
             const callbackName = 'jsonp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
+            // Cleanup function to ensure loader is always hidden
+            const cleanup = () => {
+                clearTimeout(safetyTimeout);
+                this.hideLoading();
+                delete window[callbackName];
+                if (script && script.parentNode) {
+                    document.body.removeChild(script);
+                }
+            };
+
             // Create global callback function
             window[callbackName] = (data) => {
-                delete window[callbackName];
-                if (script.parentNode) document.body.removeChild(script);
-                this.hideLoading();
+                cleanup();
                 resolve(data);
             };
 
@@ -193,20 +220,14 @@ class SyncManager {
             const script = document.createElement('script');
             script.src = `${this.scriptUrl}?${params}`;
             script.onerror = () => {
-                delete window[callbackName];
-                if (script.parentNode) document.body.removeChild(script);
-                this.hideLoading();
+                cleanup();
                 reject(new Error('JSONP request failed'));
             };
 
             // Reduced timeout to 15 seconds for better UX
             setTimeout(() => {
                 if (window[callbackName]) {
-                    delete window[callbackName];
-                    if (script.parentNode) {
-                        document.body.removeChild(script);
-                    }
-                    this.hideLoading();
+                    cleanup();
                     reject(new Error('Request timeout - try again'));
                 }
             }, 15000); // 15 second timeout (reduced from 30)
