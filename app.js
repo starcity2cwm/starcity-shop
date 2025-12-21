@@ -1,5 +1,6 @@
 // ===== STARCITY SHOP MANAGEMENT SYSTEM =====
 const TEST_MODE = false; // Set to false to activate login menu later
+const APP_VERSION = '2.1.0'; // Update this when deploying changes
 
 class StarcityApp {
     constructor() {
@@ -22,6 +23,9 @@ class StarcityApp {
 
         // Apply settings to UI
         this.applySettings();
+
+        // Check for updates
+        this.checkForUpdates();
 
         // Bypass login if in test mode
         if (TEST_MODE) {
@@ -4785,6 +4789,62 @@ Thank you!`;
             this.loadCustomRepairDropdowns();
         } else if (view === 'earnings') {
             document.getElementById('techEarningsView')?.classList.add('active');
+        }
+    }
+
+    // ===== AUTO-UPDATE FEATURE =====
+    checkForUpdates() {
+        const lastVersion = localStorage.getItem('app_version');
+
+        if (lastVersion && lastVersion !== APP_VERSION) {
+            // New version detected!
+            this.showUpdateNotification();
+        }
+
+        // Store current version
+        localStorage.setItem('app_version', APP_VERSION);
+    }
+
+    showUpdateNotification() {
+        // Create update banner
+        let banner = document.getElementById('update-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'update-banner';
+            banner.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 1rem;
+                text-align: center;
+                z-index: 100000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideDown 0.3s ease-out;
+            `;
+            banner.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                    <span style="font-weight: 600;">🎉 New update available (v${APP_VERSION})!</span>
+                    <button onclick="location.reload(true)" style="
+                        background: white;
+                        color: #667eea;
+                        border: none;
+                        padding: 0.5rem 1.5rem;
+                        border-radius: 6px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                    ">🔄 Update Now</button>
+                </div>
+            `;
+            document.body.prepend(banner);
+
+            // Add animation
+            const style = document.createElement('style');
+            style.textContent = '@keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }';
+            document.head.appendChild(style);
         }
     }
 }
