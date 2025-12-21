@@ -4,13 +4,12 @@
 
 const CACHE_NAME = 'starcity-shop-v1';
 const ASSETS_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/syncManager.js',
-    '/storageAdapter.js',
-    '/welcome.html'
+    './',
+    './index.html',
+    './styles.css',
+    './app.js',
+    './syncManager.js',
+    './storageAdapter.js'
 ];
 
 // Install event - cache assets
@@ -61,7 +60,7 @@ self.addEventListener('fetch', (event) => {
             .catch(() => {
                 // Show offline page if both cache and network fail
                 if (event.request.mode === 'navigate') {
-                    return caches.match('/index.html');
+                    return caches.match('./index.html');
                 }
             })
     );
