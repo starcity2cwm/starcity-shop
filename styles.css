@@ -1617,6 +1617,52 @@ body {
         white-space: nowrap !important;
         max-width: 100% !important;
     }
+
+    /* Fix approve repairs commission input */
+    .approval-card,
+    .job-card,
+    .list-item {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    /* Commission input row - stack vertically on mobile */
+    .approval-card .form-group,
+    .job-card .form-group,
+    .approval-card div[style*="flex"],
+    .job-card div[style*="flex"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Commission input field fix */
+    .approval-card input,
+    .job-card input,
+    .approval-card input[type="number"],
+    .job-card input[type="number"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        font-size: 1rem !important;
+    }
+
+    /* Approval buttons - side by side */
+    .approval-card .btn-group,
+    .job-card .btn-group,
+    .approval-card div:last-child {
+        display: flex !important;
+        gap: 0.5rem !important;
+        flex-wrap: wrap !important;
+    }
+
+    .approval-card .btn,
+    .job-card .btn {
+        flex: 1 !important;
+        min-width: 80px !important;
+    }
 }
 
 /* Extra small screens (phones < 400px) */
