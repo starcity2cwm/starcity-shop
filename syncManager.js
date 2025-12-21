@@ -130,17 +130,55 @@ class SyncManager {
     }
 
     /**
+     * Show/hide loading indicator
+     */
+    showLoading(message = 'Syncing...') {
+        let loader = document.getElementById('sync-loader');
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'sync-loader';
+            loader.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.85);
+                color: white;
+                padding: 1rem 2rem;
+                border-radius: 8px;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                font-size: 0.9rem;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            `;
+            document.body.appendChild(loader);
+        }
+        loader.innerHTML = `<span style="animation: spin 1s linear infinite; display: inline-block;">⏳</span> ${message}`;
+        loader.style.display = 'flex';
+    }
+
+    hideLoading() {
+        const loader = document.getElementById('sync-loader');
+        if (loader) loader.style.display = 'none';
+    }
+
+    /**
      * Call Google Apps Script backend using JSONP (bypasses CORS)
      */
-    async callBackend(functionName, args = []) {
+    async callBackend(functionName, args = [], showLoader = true) {
+        if (showLoader) this.showLoading('Syncing data...');
+
         return new Promise((resolve, reject) => {
             // Generate unique callback name
             const callbackName = 'jsonp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
             // Create global callback function
-            window[callbackName] = function (data) {
+            window[callbackName] = (data) => {
                 delete window[callbackName];
-                document.body.removeChild(script);
+                if (script.parentNode) document.body.removeChild(script);
+                this.hideLoading();
                 resolve(data);
             };
 
@@ -156,20 +194,22 @@ class SyncManager {
             script.src = `${this.scriptUrl}?${params}`;
             script.onerror = () => {
                 delete window[callbackName];
-                document.body.removeChild(script);
+                if (script.parentNode) document.body.removeChild(script);
+                this.hideLoading();
                 reject(new Error('JSONP request failed'));
             };
 
-            // Add timeout to prevent hanging
+            // Reduced timeout to 15 seconds for better UX
             setTimeout(() => {
                 if (window[callbackName]) {
                     delete window[callbackName];
                     if (script.parentNode) {
                         document.body.removeChild(script);
                     }
-                    reject(new Error('Request timeout'));
+                    this.hideLoading();
+                    reject(new Error('Request timeout - try again'));
                 }
-            }, 30000); // 30 second timeout
+            }, 15000); // 15 second timeout (reduced from 30)
 
             document.body.appendChild(script);
         });
