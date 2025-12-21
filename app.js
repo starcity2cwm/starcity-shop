@@ -2783,6 +2783,7 @@ Thank you!`;
 
         const html = this.users.map(user => {
             const isSelf = this.currentUser && this.currentUser.id === user.id;
+            const isManager = user.username === 'manager'; // Protect default manager
             return `
                 <div class="list-item">
                     <div class="list-item-header">
@@ -2791,11 +2792,12 @@ Thank you!`;
                     </div>
                     <div class="list-item-meta">
                         <span>@${user.username} • Role: ${user.role}</span>
-                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
                             <button class="btn btn-outline btn-sm" onclick="app.editUser('${user.id}')">✏️ Edit</button>
                             ${!isSelf ? `<button class="btn ${user.active ? 'btn-outline' : 'btn-success'} btn-sm" onclick="app.toggleUserStatus('${user.id}')">
                                 ${user.active ? '🔒 Deactivate' : '🔓 Activate'}
                             </button>` : ''}
+                            ${!isSelf && !isManager ? `<button class="btn btn-danger btn-sm" onclick="app.deleteUser('${user.id}', '${user.name}')" style="background: var(--danger);">🗑️ Delete</button>` : ''}
                         </div>
                     </div>
                 </div>
@@ -2803,6 +2805,40 @@ Thank you!`;
         }).join('');
 
         container.innerHTML = html || '<div class="empty-state"><p>No users found</p></div>';
+    }
+
+    // Delete user with confirmation
+    async deleteUser(userId, userName) {
+        if (!confirm(`Are you sure you want to DELETE "${userName}"?\n\nThis action cannot be undone!`)) {
+            return;
+        }
+
+        // Double confirmation for safety
+        if (!confirm(`FINAL WARNING: Delete "${userName}" permanently?`)) {
+            return;
+        }
+
+        // Remove from local array
+        const index = this.users.findIndex(u => String(u.id) === String(userId) || String(u.userid) === String(userId));
+        if (index > -1) {
+            this.users.splice(index, 1);
+
+            // Sync to backend
+            if (window.syncManager) {
+                try {
+                    await window.syncManager.callBackend('deleteUser', [userId]);
+                    this.showToast('🗑️ User deleted successfully');
+                } catch (err) {
+                    console.error('Failed to delete from backend:', err);
+                    this.showToast('⚠️ Deleted locally, sync may be needed');
+                }
+            }
+
+            this.saveData('users');
+            this.renderManagerUsers();
+        } else {
+            this.showToast('❌ User not found');
+        }
     }
 
     // ===== CREDIT MANAGEMENT =====
