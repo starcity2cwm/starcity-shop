@@ -1708,3 +1708,112 @@ body {
         font-size: 0.6rem !important;
     }
 }
+
+/* ===== ENHANCED BOTTOM NAVIGATION ===== */
+/* Larger size and sliding indicator animation */
+.bottom-nav,
+.nav-container,
+[class*="nav"][class*="bottom"] {
+    height: 70px !important;
+    padding: 0.5rem 0 !important;
+    background: var(--bg-secondary) !important;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3) !important;
+    position: relative;
+}
+
+.nav-item {
+    flex: 1;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.25rem !important;
+    padding: 0.5rem !important;
+    font-size: 1.5rem !important;
+    /* Larger icons */
+    cursor: pointer;
+    transition: all 0.3s ease !important;
+    position: relative;
+    z-index: 1;
+}
+
+.nav-item span {
+    font-size: 0.75rem !important;
+    /* Larger text */
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.nav-item.active span,
+.nav-item:active span {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* Sliding indicator */
+.bottom-nav::before,
+.nav-container::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: calc(100% / 5);
+    /* Adjust based on number of items */
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 3px 3px 0 0;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+}
+
+/* Sliding positions for each tab (adjust based on your nav items) */
+.nav-item:nth-child(1).active~.bottom-nav::before,
+[data-active="0"]::before {
+    transform: translateX(0%);
+}
+
+.nav-item:nth-child(2).active~.bottom-nav::before,
+[data-active="1"]::before {
+    transform: translateX(100%);
+}
+
+.nav-item:nth-child(3).active~.bottom-nav::before,
+[data-active="2"]::before {
+    transform: translateX(200%);
+}
+
+.nav-item:nth-child(4).active~.bottom-nav::before,
+[data-active="3"]::before {
+    transform: translateX(300%);
+}
+
+.nav-item:nth-child(5).active~.bottom-nav::before,
+[data-active="4"]::before {
+    transform: translateX(400%);
+}
+
+/* Hover effect */
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+/* Active state */
+.nav-item.active {
+    color: var(--primary) !important;
+    transform: scale(1.1);
+}
+
+/* Notification badge (if exists) */
+.nav-item .notification-badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 25%;
+    background: var(--danger);
+    color: white;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 10px;
+    font-weight: 600;
+}
