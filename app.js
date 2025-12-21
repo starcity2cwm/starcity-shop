@@ -193,26 +193,31 @@ class StarcityApp {
             this.saveData('stock');
         }
 
-        if (this.sales.length === 0) {
+        if (this.sales.length === 0 && this.stock.length > 0) {
             const now = new Date();
             for (let i = 0; i < 7; i++) {
                 const date = new Date(now);
                 date.setDate(date.getDate() - i);
                 const count = Math.floor(Math.random() * 3) + 1;
                 for (let j = 0; j < count; j++) {
-                    const product = this.stock[Math.floor(Math.random() * 3)];
-                    this.sales.push({
-                        id: Date.now() + i * 1000 + j,
-                        date: date.toISOString(),
-                        product: product.name,
-                        quantity: 1,
-                        price: product.price,
-                        total: product.price,
-                        customer: 'Customer ' + (i + j),
-                        phone: '077' + Math.floor(Math.random() * 10000000),
-                        payment: ['Cash', 'Card', 'Digital'][Math.floor(Math.random() * 3)],
-                        employee: 'Shop Staff'
-                    });
+                    // Only use first 3 products if available
+                    const maxIndex = Math.min(3, this.stock.length);
+                    const product = this.stock[Math.floor(Math.random() * maxIndex)];
+
+                    if (product) {
+                        this.sales.push({
+                            id: Date.now() + i * 1000 + j,
+                            date: date.toISOString(),
+                            product: product.name,
+                            quantity: 1,
+                            price: product.price,
+                            total: product.price,
+                            customer: 'Customer ' + (i + j),
+                            phone: '077' + Math.floor(Math.random() * 10000000),
+                            payment: ['Cash', 'Card', 'Digital'][Math.floor(Math.random() * 3)],
+                            employee: 'Shop Staff'
+                        });
+                    }
                 }
             }
             this.saveData('sales');
