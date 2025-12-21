@@ -133,15 +133,14 @@ class SyncManager {
      * Call Google Apps Script backend
      */
     async callBackend(functionName, args = []) {
-        const response = await fetch(this.scriptUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                function: functionName,
-                arguments: args
-            })
+        // Use GET with parameters in URL to avoid CORS preflight
+        const params = new URLSearchParams({
+            function: functionName,
+            arguments: JSON.stringify(args)
+        });
+
+        const response = await fetch(`${this.scriptUrl}?${params}`, {
+            method: 'GET'
         });
 
         if (!response.ok) {
