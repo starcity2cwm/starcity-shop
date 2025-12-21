@@ -1,4 +1,4 @@
-﻿// ===== STARCITY SHOP MANAGEMENT SYSTEM =====
+// ===== STARCITY SHOP MANAGEMENT SYSTEM =====
 const TEST_MODE = false; // Set to false to activate login menu later
 
 class StarcityApp {
