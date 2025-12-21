@@ -2,7 +2,7 @@
   "name": "Starcity Shop Management",
   "short_name": "Starcity Shop",
   "description": "Complete shop management system for mobile shops",
-  "start_url": "/index.html",
+  "start_url": "/starcity-shop/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#6366f1",
@@ -21,7 +21,10 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "productivity"],
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "screenshots": [
     {
       "src": "screenshot1.png",
