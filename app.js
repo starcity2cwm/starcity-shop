@@ -4089,9 +4089,19 @@ Thank you!`;
             if (type === 'vendor_debt') { key = 'vendor_debt'; data = this.vendorDebt; }
             if (type === 'warranty') { key = 'warranty'; data = this.warrantyJobs; }
 
-            localStorage.setItem(`starcity_${key}`, JSON.stringify(data || []));
+            // Save to localStorage (immediate, for instant UI updates)
+            const storageKey = `starcity_${key}`;
+            const jsonData = JSON.stringify(data || []);
+            localStorage.setItem(storageKey, jsonData);
+
+            // ALSO save to cloud (via syncManager) for persistence across sessions
+            if (window.syncManager && !storageKey.includes('custom') && storageKey !== 'starcity_settings') {
+                window.syncManager.setData(storageKey, jsonData).catch(err => {
+                    console.warn('Cloud sync will retry later:', err);
+                });
+            }
         } catch (e) {
-            console.warn('LocalStorage save failed for ' + type + ':', e);
+            console.warn('Save failed for ' + type + ':', e);
         }
     }
 
