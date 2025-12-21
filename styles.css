@@ -1621,47 +1621,66 @@ body {
     /* Fix approve repairs commission input */
     .approval-card,
     .job-card,
-    .list-item {
+    .list-item,
+    .card {
+        width: 100% !important;
+        max-width: calc(100vw - 32px) !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        padding-left: var(--spacing-sm) !important;
+        padding-right: var(--spacing-sm) !important;
+    }
+
+    /* Force ALL inputs to fit screen */
+    input,
+    input[type="text"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
-        overflow: hidden !important;
+        font-size: 16px !important;
+        /* Prevents zoom on iOS */
     }
 
     /* Commission input row - stack vertically on mobile */
     .approval-card .form-group,
     .job-card .form-group,
-    .approval-card div[style*="flex"],
-    .job-card div[style*="flex"] {
-        flex-direction: column !important;
-        align-items: stretch !important;
+    .list-item .form-group,
+    div[style*="display: flex"],
+    div[style*="display:flex"] {
+        flex-wrap: wrap !important;
         gap: 0.5rem !important;
     }
 
-    /* Commission input field fix */
-    .approval-card input,
-    .job-card input,
-    .approval-card input[type="number"],
-    .job-card input[type="number"] {
-        width: 100% !important;
+    /* Commission label and input container */
+    .approval-card>div,
+    .job-card>div,
+    .list-item>div {
         max-width: 100% !important;
-        box-sizing: border-box !important;
-        font-size: 1rem !important;
+        overflow: hidden !important;
     }
 
-    /* Approval buttons - side by side */
-    .approval-card .btn-group,
-    .job-card .btn-group,
-    .approval-card div:last-child {
+    /* Approval buttons - side by side but wrap */
+    .btn-group,
+    .action-buttons,
+    div[style*="gap"] {
         display: flex !important;
         gap: 0.5rem !important;
         flex-wrap: wrap !important;
+        width: 100% !important;
     }
 
     .approval-card .btn,
-    .job-card .btn {
-        flex: 1 !important;
+    .job-card .btn,
+    .list-item .btn {
+        flex: 1 1 45% !important;
         min-width: 80px !important;
+        max-width: 100% !important;
     }
 }
 
