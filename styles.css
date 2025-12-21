@@ -64,6 +64,8 @@
 html {
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    max-width: 100vw;
 }
 
 body {
@@ -73,6 +75,8 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     min-height: 100vh;
+    max-width: 100vw;
+    position: relative;
 }
 
 /* ==== SCREENS ===== */
@@ -284,6 +288,9 @@ body {
     padding: var(--spacing-lg);
     padding-bottom: 100px;
     overflow-y: auto;
+    overflow-x: hidden;
+    max-width: 100vw;
+    box-sizing: border-box;
 }
 
 .view {
@@ -491,6 +498,8 @@ body {
 .form-group select,
 .form-group textarea {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     padding: var(--spacing-md);
     background: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -499,6 +508,7 @@ body {
     font-family: var(--font-sans);
     font-size: 1rem;
     transition: all var(--transition-fast);
+    box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -1404,15 +1414,15 @@ body {
         right: 16px;
         top: 70px;
     }
-    
+
     .toast-premium {
         padding: var(--spacing-md);
     }
-    
+
     .toast-icon {
         font-size: 1.5rem;
     }
-    
+
     .toast-content {
         font-size: 0.9rem;
     }
