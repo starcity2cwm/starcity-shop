@@ -92,9 +92,31 @@ class StarcityApp {
     }
 
     // ===== DATA INITIALIZATION =====
-    initData() {
+    async initData() {
         try {
-            this.users = JSON.parse(localStorage.getItem('starcity_users'));
+            // CRITICAL: Load users from backend FIRST to ensure multi-device sync
+            if (window.syncManager) {
+                try {
+                    const backendUsers = await window.syncManager.callBackend('getUsers');
+                    if (backendUsers && Array.isArray(backendUsers) && backendUsers.length > 0) {
+                        this.users = backendUsers;
+                        // Save to localStorage for offline access
+                        localStorage.setItem('starcity_users', JSON.stringify(backendUsers));
+                        console.log('✓ Loaded', backendUsers.length, 'users from backend');
+                    } else {
+                        // No users in backend, load from localStorage
+                        this.users = JSON.parse(localStorage.getItem('starcity_users')) || [];
+                    }
+                } catch (err) {
+                    console.warn('Failed to load users from backend, using localStorage:', err);
+                    this.users = JSON.parse(localStorage.getItem('starcity_users')) || [];
+                }
+            } else {
+                // No syncManager, load from localStorage
+                this.users = JSON.parse(localStorage.getItem('starcity_users')) || [];
+            }
+
+            // Load other data from localStorage (these use the storageAdapter)
             this.stock = JSON.parse(localStorage.getItem('starcity_stock'));
             this.sales = JSON.parse(localStorage.getItem('starcity_sales'));
             this.repairJobs = JSON.parse(localStorage.getItem('starcity_repairs')) || [];
@@ -136,13 +158,18 @@ class StarcityApp {
                 );
             }
 
-            this.saveData('users');
-            // Force save other empty arrays to clean up potential bad state
-            this.saveData('stock');
-            this.saveData('sales');
-            this.saveData('repairs');
-            this.saveData('vendors');
-            this.saveData('purchases');
+            // IMPORTANT: Use backend addUser instead of saveData to prevent overwriting
+            if (window.syncManager) {
+                for (const user of this.users) {
+                    try {
+                        await window.syncManager.callBackend('addUser', [user]);
+                    } catch (e) {
+                        console.warn('Failed to add default user to backend:', e);
+                    }
+                }
+            } else {
+                this.saveData('users');
+            }
         }
     }
 
