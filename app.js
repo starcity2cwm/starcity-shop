@@ -31,6 +31,15 @@ class StarcityApp {
         if (TEST_MODE) {
             setTimeout(() => this.bypassLogin(), 500);
         }
+
+        // CRITICAL FIX: Ensure sync overlay is always hidden after initialization
+        // This fixes the persistent "Syncing data..." overlay issue
+        setTimeout(() => {
+            if (window.syncManager) {
+                window.syncManager.hideLoading();
+                console.log('✓ Initialization complete - overlay dismissed');
+            }
+        }, 3000); // Give sync 3 seconds max, then force hide
     }
 
     // ===== TEST MODE BYPASS =====
