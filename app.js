@@ -4776,6 +4776,25 @@ Thank you!`;
         }
     }
 
+    forceRefresh() {
+        if (confirm('This will clear app cache and reload to fix sync issues. Proceed?')) {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                    }
+                    caches.keys().then(names => {
+                        for (let name of names) caches.delete(name);
+                        // Force a hard reload from server
+                        window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
+                    });
+                });
+            } else {
+                window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
+            }
+        }
+    }
+
     switchTechView(view) {
         // Hide all technician views
         const views = ['techDashboardView', 'techJobsView', 'techNewJobView', 'techEarningsView'];
