@@ -1,6 +1,5 @@
-// ===== STARCITY SHOP MANAGEMENT SYSTEM =====
-const TEST_MODE = false; // Set to false to activate login menu later
-const APP_VERSION = '2.1.0'; // Update this when deploying changes
+﻿// ===== STARCITY SHOP MANAGEMENT SYSTEM =====
+const TEST_MODE = true; // Set to false to activate login menu later
 
 class StarcityApp {
     constructor() {
@@ -24,22 +23,10 @@ class StarcityApp {
         // Apply settings to UI
         this.applySettings();
 
-        // Check for updates
-        this.checkForUpdates();
-
         // Bypass login if in test mode
         if (TEST_MODE) {
             setTimeout(() => this.bypassLogin(), 500);
         }
-
-        // CRITICAL FIX: Ensure sync overlay is always hidden after initialization
-        // This fixes the persistent "Syncing data..." overlay issue
-        setTimeout(() => {
-            if (window.syncManager) {
-                window.syncManager.hideLoading();
-                console.log('✓ Initialization complete - overlay dismissed');
-            }
-        }, 3000); // Give sync 3 seconds max, then force hide
     }
 
     // ===== TEST MODE BYPASS =====
@@ -105,7 +92,7 @@ class StarcityApp {
     }
 
     // ===== DATA INITIALIZATION =====
-    async initData() {
+    initData() {
         const load = (key, fallback = []) => {
             try {
                 const data = localStorage.getItem(key);
@@ -116,45 +103,18 @@ class StarcityApp {
             }
         };
 
-        try {
-            // CRITICAL: Load users from backend FIRST to ensure multi-device sync
-            if (window.syncManager) {
-                try {
-                    const backendUsers = await window.syncManager.callBackend('getUsers');
-                    if (backendUsers && Array.isArray(backendUsers) && backendUsers.length > 0) {
-                        this.users = backendUsers;
-                        // Save to localStorage for offline access
-                        localStorage.setItem('starcity_users', JSON.stringify(backendUsers));
-                        console.log('✓ Loaded', backendUsers.length, 'users from backend');
-                    } else {
-                        // No users in backend, load from localStorage
-                        this.users = load('starcity_users');
-                    }
-                } catch (err) {
-                    console.warn('Failed to load users from backend, using localStorage:', err);
-                    this.users = load('starcity_users');
-                }
-            } else {
-                // No syncManager, load from localStorage
-                this.users = load('starcity_users');
-            }
-
-            // Load other data from localStorage (these use the storageAdapter)
-            this.stock = load('starcity_stock');
-            this.sales = load('starcity_sales');
-            this.repairJobs = load('starcity_repairs');
-            this.vendors = load('starcity_vendors');
-            this.purchases = load('starcity_purchases');
-            this.customerCredits = load('starcity_customer_credits');
-            this.vendorCredits = load('starcity_vendor_credits');
-            this.vendorDebt = load('starcity_vendor_debt');
-            this.expenses = load('starcity_expenses');
-            this.warrantyJobs = load('starcity_warranty');
-            this.dailyCash = load('starcity_dailyCash');
-        } catch (e) {
-            console.warn('Initialization error:', e);
-            this.users = this.users || [];
-        }
+        this.users = load('starcity_users');
+        this.stock = load('starcity_stock');
+        this.sales = load('starcity_sales');
+        this.repairJobs = load('starcity_repairs');
+        this.vendors = load('starcity_vendors');
+        this.purchases = load('starcity_purchases');
+        this.customerCredits = load('starcity_customer_credits');
+        this.vendorCredits = load('starcity_vendor_credits');
+        this.vendorDebt = load('starcity_vendor_debt');
+        this.expenses = load('starcity_expenses');
+        this.warrantyJobs = load('starcity_warranty');
+        this.dailyCash = load('starcity_dailyCash');
 
         // Ensure all are arrays (fixes possible data corruption)
         if (!Array.isArray(this.users)) this.users = [];
@@ -181,24 +141,19 @@ class StarcityApp {
                 );
             }
 
-            // IMPORTANT: Use backend addUser instead of saveData to prevent overwriting
-            if (window.syncManager) {
-                for (const user of this.users) {
-                    try {
-                        await window.syncManager.callBackend('addUser', [user]);
-                    } catch (e) {
-                        console.warn('Failed to add default user to backend:', e);
-                    }
-                }
-            } else {
-                this.saveData('users');
-            }
+            this.saveData('users');
+            // Force save other empty arrays to clean up potential bad state
+            this.saveData('stock');
+            this.saveData('sales');
+            this.saveData('repairs');
+            this.saveData('vendors');
+            this.saveData('purchases');
         }
     }
 
     // ===== SAMPLE DATA =====
     loadSampleData() {
-        if (!this.stock || this.stock.length === 0) {
+        if (this.stock.length === 0) {
             this.stock = [
                 { id: 1, name: 'iPhone 15 Pro', category: 'Phones', brand: 'Apple', quantity: 8, minQuantity: 3, cost: 390000, price: 450000 },
                 { id: 2, name: 'Samsung Galaxy S24', category: 'Phones', brand: 'Samsung', quantity: 12, minQuantity: 5, cost: 320000, price: 380000 },
@@ -212,31 +167,26 @@ class StarcityApp {
             this.saveData('stock');
         }
 
-        if (this.sales.length === 0 && this.stock.length > 0) {
+        if (this.sales.length === 0) {
             const now = new Date();
             for (let i = 0; i < 7; i++) {
                 const date = new Date(now);
                 date.setDate(date.getDate() - i);
                 const count = Math.floor(Math.random() * 3) + 1;
                 for (let j = 0; j < count; j++) {
-                    // Only use first 3 products if available
-                    const maxIndex = Math.min(3, this.stock.length);
-                    const product = this.stock[Math.floor(Math.random() * maxIndex)];
-
-                    if (product) {
-                        this.sales.push({
-                            id: Date.now() + i * 1000 + j,
-                            date: date.toISOString(),
-                            product: product.name,
-                            quantity: 1,
-                            price: product.price,
-                            total: product.price,
-                            customer: 'Customer ' + (i + j),
-                            phone: '077' + Math.floor(Math.random() * 10000000),
-                            payment: ['Cash', 'Card', 'Digital'][Math.floor(Math.random() * 3)],
-                            employee: 'Shop Staff'
-                        });
-                    }
+                    const product = this.stock[Math.floor(Math.random() * 3)];
+                    this.sales.push({
+                        id: Date.now() + i * 1000 + j,
+                        date: date.toISOString(),
+                        product: product.name,
+                        quantity: 1,
+                        price: product.price,
+                        total: product.price,
+                        customer: 'Customer ' + (i + j),
+                        phone: '077' + Math.floor(Math.random() * 10000000),
+                        payment: ['Cash', 'Card', 'Digital'][Math.floor(Math.random() * 3)],
+                        employee: 'Shop Staff'
+                    });
                 }
             }
             this.saveData('sales');
@@ -509,9 +459,7 @@ class StarcityApp {
 
         if (user) {
             this.currentUser = user;
-            // Fix: Make role comparison case-insensitive
-            const userRole = (user.role || '').toLowerCase();
-            this.showScreen(userRole === 'manager' ? 'manager' : 'technician');
+            this.showScreen(user.role === 'manager' ? 'manager' : 'technician');
             this.render();
             this.showToast(`Welcome back, ${user.name}!`);
         } else {
@@ -1515,6 +1463,7 @@ class StarcityApp {
         const minQuantity = parseInt(document.getElementById('productMinQty').value);
         const cost = parseFloat(document.getElementById('productCost').value);
         const price = parseFloat(document.getElementById('productPrice').value);
+        const description = document.getElementById('productDescription')?.value || '';
         const imageInput = document.getElementById('productImageInput');
 
         if (!name || !category || quantity < 0 || cost < 0 || price < 0) {
@@ -1523,30 +1472,19 @@ class StarcityApp {
         }
 
         const processProduct = (imageData) => {
-            const productData = {
-                name,
-                category,
-                brand,
-                quantity,
-                minQty: minQuantity,
-                costPrice: cost,
-                sellingPrice: price,
-                image: imageData || null
-            };
-
             if (productId) {
                 // Update existing product
                 const product = this.stock.find(p => p.id == productId);
                 if (product) {
-                    Object.assign(product, { name, category, brand, quantity, minQuantity, cost, price });
+                    product.name = name;
+                    product.category = category;
+                    product.brand = brand;
+                    product.quantity = quantity;
+                    product.minQuantity = minQuantity;
+                    product.cost = cost;
+                    product.price = price;
+                    product.description = description;
                     if (imageData) product.image = imageData;
-
-                    // Call backend updateProduct
-                    if (window.syncManager) {
-                        window.syncManager.callBackend('updateProduct', [productId, productData])
-                            .then(() => console.log('Product updated in backend'))
-                            .catch(err => console.warn('Backend update failed:', err));
-                    }
 
                     this.saveData('stock');
                     this.showToast('✓ Product updated successfully');
@@ -1554,27 +1492,23 @@ class StarcityApp {
                     this.renderManagerStock();
                 }
             } else {
-                // Add new product - call backend directly
-                if (window.syncManager) {
-                    window.syncManager.callBackend('addProduct', [productData])
-                        .then(result => {
-                            console.log('Product added to backend:', result);
-                            // Reload stock from backend
-                            this.initData();
-                            this.showToast('✓ Product added successfully');
-                        })
-                        .catch(err => {
-                            console.error('Failed to add product:', err);
-                            this.showToast('❌ Failed to add product');
-                        });
-                } else {
-                    // Fallback to local
-                    const newProduct = { id: Date.now(), name, category, brand, quantity, minQuantity, cost, price, image: imageData || null };
-                    this.stock.push(newProduct);
-                    this.saveData('stock');
-                    this.showToast('✓ Product added locally (offline)');
-                }
+                // Add new product
+                const newProduct = {
+                    id: Date.now(),
+                    name,
+                    category,
+                    brand,
+                    quantity,
+                    minQuantity,
+                    cost,
+                    price,
+                    description,
+                    image: imageData || null
+                };
 
+                this.stock.push(newProduct);
+                this.saveData('stock');
+                this.showToast('✓ Product added successfully');
                 this.closeModal('addProductModal');
                 this.renderManagerStock();
             }
@@ -1923,7 +1857,58 @@ class StarcityApp {
         this.render();
     }
 
-    // NOTE: showAddProductModal and handleAddProduct are defined earlier at lines ~1441 and ~1479
+
+    showAddProductModal() {
+        document.getElementById('addProductModalTitle').textContent = 'Add New Product';
+        document.getElementById('productId').value = '';
+        document.getElementById('addProductForm').reset();
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('imagePreviewText').style.display = 'block';
+        document.getElementById('addProductSubmitBtn').textContent = 'Add Product';
+        this.showModal('addProductModal');
+    }
+
+    handleAddProduct() {
+        const fileInput = document.getElementById('productImageInput');
+        const file = fileInput.files[0];
+
+        const saveProduct = (imageData) => {
+            const id = document.getElementById('productId').value;
+            const productData = {
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                brand: document.getElementById('productBrand').value,
+                quantity: parseInt(document.getElementById('productQty').value),
+                minQuantity: parseInt(document.getElementById('productMinQty').value),
+                cost: parseFloat(document.getElementById('productCost').value),
+                price: parseFloat(document.getElementById('productPrice').value),
+                image: imageData || (id ? this.stock.find(p => String(p.id) === String(id))?.image : null)
+            };
+
+            if (id) {
+                const index = this.stock.findIndex(p => String(p.id) === String(id));
+                if (index !== -1) {
+                    this.stock[index] = { ...this.stock[index], ...productData };
+                }
+            } else {
+                this.stock.push({ id: Date.now(), ...productData });
+            }
+
+            this.saveData('stock');
+            this.closeModal('addProductModal');
+            document.getElementById('addProductForm').reset();
+            this.showToast(`✓ Product ${id ? 'updated' : 'added'} successfully!`);
+            this.render();
+        };
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => saveProduct(e.target.result);
+            reader.readAsDataURL(file);
+        } else {
+            saveProduct(null);
+        }
+    }
 
     editStockItem(id) {
         const item = this.stock.find(p => String(p.id) === String(id));
@@ -2811,7 +2796,6 @@ Thank you!`;
 
         const html = this.users.map(user => {
             const isSelf = this.currentUser && this.currentUser.id === user.id;
-            const isManager = user.username === 'manager'; // Protect default manager
             return `
                 <div class="list-item">
                     <div class="list-item-header">
@@ -2820,12 +2804,11 @@ Thank you!`;
                     </div>
                     <div class="list-item-meta">
                         <span>@${user.username} • Role: ${user.role}</span>
-                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                             <button class="btn btn-outline btn-sm" onclick="app.editUser('${user.id}')">✏️ Edit</button>
                             ${!isSelf ? `<button class="btn ${user.active ? 'btn-outline' : 'btn-success'} btn-sm" onclick="app.toggleUserStatus('${user.id}')">
                                 ${user.active ? '🔒 Deactivate' : '🔓 Activate'}
                             </button>` : ''}
-                            ${!isSelf && !isManager ? `<button class="btn btn-danger btn-sm" onclick="app.deleteUser('${user.id}', '${user.name}')" style="background: var(--danger);">🗑️ Delete</button>` : ''}
                         </div>
                     </div>
                 </div>
@@ -2833,40 +2816,6 @@ Thank you!`;
         }).join('');
 
         container.innerHTML = html || '<div class="empty-state"><p>No users found</p></div>';
-    }
-
-    // Delete user with confirmation
-    async deleteUser(userId, userName) {
-        if (!confirm(`Are you sure you want to DELETE "${userName}"?\n\nThis action cannot be undone!`)) {
-            return;
-        }
-
-        // Double confirmation for safety
-        if (!confirm(`FINAL WARNING: Delete "${userName}" permanently?`)) {
-            return;
-        }
-
-        // Remove from local array
-        const index = this.users.findIndex(u => String(u.id) === String(userId) || String(u.userid) === String(userId));
-        if (index > -1) {
-            this.users.splice(index, 1);
-
-            // Sync to backend
-            if (window.syncManager) {
-                try {
-                    await window.syncManager.callBackend('deleteUser', [userId]);
-                    this.showToast('🗑️ User deleted successfully');
-                } catch (err) {
-                    console.error('Failed to delete from backend:', err);
-                    this.showToast('⚠️ Deleted locally, sync may be needed');
-                }
-            }
-
-            this.saveData('users');
-            this.renderManagerUsers();
-        } else {
-            this.showToast('❌ User not found');
-        }
     }
 
     // ===== CREDIT MANAGEMENT =====
@@ -3235,31 +3184,17 @@ Thank you!`;
 
         if (editId) {
             // Editing existing user
-            const index = this.users.findIndex(u => u.id === editId || u.username === editId || u.userid === editId);
+            const index = this.users.findIndex(u => u.id === editId || u.username === editId);
             if (index !== -1) {
-                // Keep existing ID
-                const userId = this.users[index].userid || this.users[index].id;
+                // Keep existing ID and password if not changed
+                userData.id = this.users[index].id;
                 userData.password = password ? password : this.users[index].password;
 
                 // Update current user if editing self
                 if (this.currentUser && (this.currentUser.id === editId || this.currentUser.username === editId)) {
                     Object.assign(this.currentUser, userData);
                 }
-
-                // Update locally
-                this.users[index] = { ...this.users[index], ...userData };
-
-                // Call backend updateUser function
-                if (window.syncManager) {
-                    window.syncManager.callBackend('updateUser', [userId, userData])
-                        .then(() => {
-                            console.log('User updated in backend');
-                            // Reload users from backend to stay in sync
-                            this.initData();
-                        })
-                        .catch(err => console.warn('Backend update failed, will retry:', err));
-                }
-
+                this.users[index] = userData;
                 this.showToast('✓ User updated successfully!');
             }
         } else {
@@ -3272,31 +3207,13 @@ Thank you!`;
                 this.showToast('❌ Password is required for new users!');
                 return;
             }
-
+            userData.id = 'user_' + Date.now();
             userData.password = password;
-
-            // Call backend addUser function instead of local save
-            if (window.syncManager) {
-                window.syncManager.callBackend('addUser', [userData])
-                    .then(result => {
-                        console.log('User added to backend:', result);
-                        // Reload all users from backend to get the new user with correct ID
-                        this.initData();
-                        this.showToast('✓ User created successfully!');
-                    })
-                    .catch(err => {
-                        console.error('Failed to add user to backend:', err);
-                        this.showToast('❌ Failed to create user. Check console.');
-                    });
-            } else {
-                // Fallback to local only if syncManager not available
-                userData.id = 'user_' + Date.now();
-                this.users.push(userData);
-                this.saveData('users');
-                this.showToast('✓ User created locally (offline)');
-            }
+            this.users.push(userData);
+            this.showToast('✓ User created successfully!');
         }
 
+        this.saveData('users');
         this.closeModal('userModal');
         this.renderUsers();
     }
@@ -4178,19 +4095,9 @@ Thank you!`;
             if (type === 'vendor_debt') { key = 'vendor_debt'; data = this.vendorDebt; }
             if (type === 'warranty') { key = 'warranty'; data = this.warrantyJobs; }
 
-            // Save to localStorage (immediate, for instant UI updates)
-            const storageKey = `starcity_${key}`;
-            const jsonData = JSON.stringify(data || []);
-            localStorage.setItem(storageKey, jsonData);
-
-            // ALSO save to cloud (via syncManager) for persistence across sessions
-            if (window.syncManager && !storageKey.includes('custom') && storageKey !== 'starcity_settings') {
-                window.syncManager.setData(storageKey, jsonData).catch(err => {
-                    console.warn('Cloud sync will retry later:', err);
-                });
-            }
+            localStorage.setItem(`starcity_${key}`, JSON.stringify(data || []));
         } catch (e) {
-            console.warn('Save failed for ' + type + ':', e);
+            console.warn('LocalStorage save failed for ' + type + ':', e);
         }
     }
 
@@ -4832,62 +4739,6 @@ Thank you!`;
             this.loadCustomRepairDropdowns();
         } else if (view === 'earnings') {
             document.getElementById('techEarningsView')?.classList.add('active');
-        }
-    }
-
-    // ===== AUTO-UPDATE FEATURE =====
-    checkForUpdates() {
-        const lastVersion = localStorage.getItem('app_version');
-
-        if (lastVersion && lastVersion !== APP_VERSION) {
-            // New version detected!
-            this.showUpdateNotification();
-        }
-
-        // Store current version
-        localStorage.setItem('app_version', APP_VERSION);
-    }
-
-    showUpdateNotification() {
-        // Create update banner
-        let banner = document.getElementById('update-banner');
-        if (!banner) {
-            banner = document.createElement('div');
-            banner.id = 'update-banner';
-            banner.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 1rem;
-                text-align: center;
-                z-index: 100000;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                animation: slideDown 0.3s ease-out;
-            `;
-            banner.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-                    <span style="font-weight: 600;">🎉 New update available (v${APP_VERSION})!</span>
-                    <button onclick="location.reload(true)" style="
-                        background: white;
-                        color: #667eea;
-                        border: none;
-                        padding: 0.5rem 1.5rem;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-                    ">🔄 Update Now</button>
-                </div>
-            `;
-            document.body.prepend(banner);
-
-            // Add animation
-            const style = document.createElement('style');
-            style.textContent = '@keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }';
-            document.head.appendChild(style);
         }
     }
 }
