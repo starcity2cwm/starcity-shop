@@ -106,6 +106,16 @@ class StarcityApp {
 
     // ===== DATA INITIALIZATION =====
     async initData() {
+        const load = (key, fallback = []) => {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : fallback;
+            } catch (e) {
+                console.warn(`Error loading ${key}:`, e);
+                return fallback;
+            }
+        };
+
         try {
             // CRITICAL: Load users from backend FIRST to ensure multi-device sync
             if (window.syncManager) {
@@ -118,32 +128,32 @@ class StarcityApp {
                         console.log('✓ Loaded', backendUsers.length, 'users from backend');
                     } else {
                         // No users in backend, load from localStorage
-                        this.users = JSON.parse(localStorage.getItem('starcity_users')) || [];
+                        this.users = load('starcity_users');
                     }
                 } catch (err) {
                     console.warn('Failed to load users from backend, using localStorage:', err);
-                    this.users = JSON.parse(localStorage.getItem('starcity_users')) || [];
+                    this.users = load('starcity_users');
                 }
             } else {
                 // No syncManager, load from localStorage
-                this.users = JSON.parse(localStorage.getItem('starcity_users')) || [];
+                this.users = load('starcity_users');
             }
 
             // Load other data from localStorage (these use the storageAdapter)
-            this.stock = JSON.parse(localStorage.getItem('starcity_stock'));
-            this.sales = JSON.parse(localStorage.getItem('starcity_sales'));
-            this.repairJobs = JSON.parse(localStorage.getItem('starcity_repairs')) || [];
-            this.vendors = JSON.parse(localStorage.getItem('starcity_vendors')) || [];
-            this.purchases = JSON.parse(localStorage.getItem('starcity_purchases')) || [];
-            this.customerCredits = JSON.parse(localStorage.getItem('starcity_customer_credits')) || [];
-            this.vendorCredits = JSON.parse(localStorage.getItem('starcity_vendor_credits')) || [];
-            this.vendorDebt = JSON.parse(localStorage.getItem('starcity_vendor_debt')) || [];
-            this.expenses = JSON.parse(localStorage.getItem('starcity_expenses')) || [];
-            this.warrantyJobs = JSON.parse(localStorage.getItem('starcity_warranty')) || [];
-            this.dailyCash = JSON.parse(localStorage.getItem('starcity_dailyCash')) || [];
+            this.stock = load('starcity_stock');
+            this.sales = load('starcity_sales');
+            this.repairJobs = load('starcity_repairs');
+            this.vendors = load('starcity_vendors');
+            this.purchases = load('starcity_purchases');
+            this.customerCredits = load('starcity_customer_credits');
+            this.vendorCredits = load('starcity_vendor_credits');
+            this.vendorDebt = load('starcity_vendor_debt');
+            this.expenses = load('starcity_expenses');
+            this.warrantyJobs = load('starcity_warranty');
+            this.dailyCash = load('starcity_dailyCash');
         } catch (e) {
-            console.warn('LocalStorage error or not available:', e);
-            this.users = [];
+            console.warn('Initialization error:', e);
+            this.users = this.users || [];
         }
 
         // Ensure all are arrays (fixes possible data corruption)
