@@ -6,7 +6,7 @@
 
 class SyncManager {
     constructor() {
-        this.scriptUrl = 'https://script.google.com/macros/s/AKfycbzKSaY_UQBEl_meRDtaaDOajqc5iYfT5PcYomg2ADWaPP75zubx1Hv1W8ZuZ7-76Ma4ig/exec'; // New deployment URL
+        this.scriptUrl = 'https://script.google.com/macros/s/AKfycbzKSaY_UQBEl_meRDtaaDOajqc5iYfT5PcYomg2ADWaPP75zubx1Hv1W8ZuZ7-76Ma4ig/exec'; // Production URL
         this.cache = {}; // Local cache for offline support
         this.pendingSync = []; // Queue for offline operations
         this.isOnline = navigator.onLine;
@@ -60,6 +60,12 @@ class SyncManager {
             }
 
             const response = await this.callBackend(functionName);
+
+            // Robustness check: Backend might return HTML on misconfiguration
+            if (typeof response === 'string' && (response.includes('<!DOCTYPE html>') || response.includes('<html'))) {
+                console.error('Invalid backend response: Received HTML instead of data');
+                return this.cache[key] || null;
+            }
 
             // Cache the result
             this.cache[key] = JSON.stringify(response);
@@ -178,59 +184,63 @@ class SyncManager {
     }
 
     /**
-     * Call Google Apps Script backend using JSONP (bypasses CORS)
+     * Call Google Apps Script backend using JSONP (required for CORS)
      */
     async callBackend(functionName, args = [], showLoader = true) {
         if (showLoader) this.showLoading('Syncing data...');
 
-        // Safety timeout to auto-hide loader after 20 seconds no matter what
+        // Safety timeout to auto-hide loader after 15 seconds
         const safetyTimeout = setTimeout(() => {
             this.hideLoading();
-            console.warn('Safety timeout: Force hiding loader');
-        }, 20000);
+            console.warn('Sync safety timeout reached');
+        }, 15000);
 
         return new Promise((resolve, reject) => {
             // Generate unique callback name
             const callbackName = 'jsonp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-            // Cleanup function to ensure loader is always hidden
             const cleanup = () => {
                 clearTimeout(safetyTimeout);
                 this.hideLoading();
                 delete window[callbackName];
-                if (script && script.parentNode) {
-                    document.body.removeChild(script);
-                }
+                const script = document.getElementById(callbackName);
+                if (script) script.remove();
             };
 
             // Create global callback function
             window[callbackName] = (data) => {
                 cleanup();
-                resolve(data);
+                // Check if data is actually valid (not HTML content from redirection)
+                if (typeof data === 'string' && (data.includes('<!DOCTYPE') || data.includes('<html'))) {
+                    reject(new Error('Backend returned HTML instead of data - script may be misconfigured'));
+                } else {
+                    resolve(data);
+                }
             };
 
-            // Build URL with JSONP callback
+            // Build URL
             const params = new URLSearchParams({
                 function: functionName,
                 arguments: JSON.stringify(args),
                 callback: callbackName
             });
 
-            // Create script tag for JSONP request
+            // Create script tag
             const script = document.createElement('script');
+            script.id = callbackName;
             script.src = `${this.scriptUrl}?${params}`;
             script.onerror = () => {
                 cleanup();
-                reject(new Error('JSONP request failed'));
+                reject(new Error('Connection to backend failed'));
             };
 
-            // Reduced timeout to 15 seconds for better UX
+            // Request timeout
             setTimeout(() => {
                 if (window[callbackName]) {
                     cleanup();
-                    reject(new Error('Request timeout - try again'));
+                    reject(new Error('Sync timeout - check your connection'));
                 }
-            }, 15000); // 15 second timeout (reduced from 30)
+            }, 12000);
 
             document.body.appendChild(script);
         });
