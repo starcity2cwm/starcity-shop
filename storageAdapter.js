@@ -56,6 +56,10 @@ window.localStorage = {
 window.addEventListener('DOMContentLoaded', async () => {
     console.log('Loading data from cloud...');
 
+    // Clear all cached data to force fresh load from cloud
+    localStorage.clear();
+    console.log('Local cache cleared - loading fresh data from cloud');
+
     // Show loader once at the start
     window.syncManager.showLoading('Loading data from cloud...');
 
