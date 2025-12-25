@@ -56,6 +56,9 @@ window.localStorage = {
 window.addEventListener('DOMContentLoaded', async () => {
     console.log('Loading data from cloud...');
 
+    // Show loader once at the start
+    window.syncManager.showLoading('Loading data from cloud...');
+
     try {
         // Load all data into cache
         const keys = [
@@ -72,7 +75,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         ];
 
         for (const key of keys) {
-            const data = await window.syncManager.getData(key);
+            // Pass showLoader = false to prevent multiple loaders
+            const data = await window.syncManager.getData(key, false);
             if (data) {
                 originalLocalStorage.setItem(key, data);
             }
@@ -86,6 +90,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('Failed to load cloud data:', error);
         console.log('Using local data as fallback');
+    } finally {
+        // Always hide the loader when done
+        window.syncManager.forceHideLoading();
     }
 });
 

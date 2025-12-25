@@ -27,7 +27,7 @@ class SyncManager {
     /**
      * Get data from backend (replaces localStorage.getItem)
      */
-    async getData(key) {
+    async getData(key, showLoader = true) {
         // Try cache first for offline support
         if (this.cache[key]) {
             return this.cache[key];
@@ -61,7 +61,7 @@ class SyncManager {
                 return null;
             }
 
-            const response = await this.callBackend(functionName);
+            const response = await this.callBackend(functionName, [], showLoader);
 
             // Robustness check: Backend might return HTML on misconfiguration
             if (typeof response === 'string' && (response.includes('<!DOCTYPE html>') || response.includes('<html'))) {
