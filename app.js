@@ -162,6 +162,47 @@ class StarcityApp {
         }
     }
 
+    // Helper to save data to localStorage (triggers cloud sync via storageAdapter)
+    saveData(dataType) {
+        const dataMap = {
+            'users': 'starcity_users',
+            'stock': 'starcity_stock',
+            'sales': 'starcity_sales',
+            'repairs': 'starcity_repairs',
+            'warranty': 'starcity_warranty',
+            'vendors': 'starcity_vendors',
+            'purchases': 'starcity_purchases',
+            'expenses': 'starcity_expenses',
+            'customer_credits': 'starcity_customer_credits',
+            'vendor_credits': 'starcity_vendor_credits'
+        };
+
+        const key = dataMap[dataType];
+        if (!key) {
+            console.warn('Unknown data type:', dataType);
+            return;
+        }
+
+        const dataArrayMap = {
+            'starcity_users': this.users,
+            'starcity_stock': this.stock,
+            'starcity_sales': this.sales,
+            'starcity_repairs': this.repairJobs,
+            'starcity_warranty': this.warrantyJobs,
+            'starcity_vendors': this.vendors,
+            'starcity_purchases': this.purchases,
+            'starcity_expenses': this.expenses,
+            'starcity_customer_credits': this.customerCredits,
+            'starcity_vendor_credits': this.vendorCredits
+        };
+
+        const data = dataArrayMap[key];
+        if (data) {
+            localStorage.setItem(key, JSON.stringify(data));
+            console.log(`✓ Saved ${dataType} (${data.length} items) - syncing to cloud...`);
+        }
+    }
+
     // ===== SAMPLE DATA =====
     loadSampleData() {
         if (this.stock.length === 0) {
