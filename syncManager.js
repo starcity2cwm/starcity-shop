@@ -209,7 +209,10 @@ class SyncManager {
             this.globalSafetyTimer = null;
         }
         const loader = document.getElementById('sync-loader');
-        if (loader) loader.style.display = 'none';
+        if (loader) {
+            // Use !important to override mobile CSS that forces display: flex on divs with gap
+            loader.style.setProperty('display', 'none', 'important');
+        }
     }
 
     /**
