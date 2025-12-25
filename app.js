@@ -3315,12 +3315,13 @@ Thank you!`;
                         <div style="margin-bottom: 0.5rem; color: var(--text-primary);">
                             ${user.phone ? `📱 ${user.phone}` : ''}
                         </div>
-                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap;">
                             <button class="btn btn-info btn-sm" onclick="app.openUserModal('${user.userid || user.username}')">✏️ Edit</button>
                             <button class="btn ${user.active ? 'btn-warning' : 'btn-success'} btn-sm" 
                                 onclick="app.toggleUserStatus('${user.userid || user.username}')">
                                 ${user.active ? '🚫 Deactivate' : '✅ Activate'}
                             </button>
+                            <button class="btn btn-danger btn-sm" onclick="app.deleteUser('${user.userid || user.username}')">🗑️ Delete</button>
                         </div>
                     </div>
                 </div>
@@ -3340,6 +3341,30 @@ Thank you!`;
             this.saveData('users');
             this.render();
             this.showToast(`User ${user.active ? 'activated' : 'deactivated'}`);
+        }
+    }
+
+    deleteUser(userId) {
+        const user = this.users.find(u => String(u.userid) === String(userId) || u.username === userId);
+        if (!user) {
+            this.showToast('❌ User not found');
+            return;
+        }
+
+        if (confirm(`Are you sure you want to permanently delete user "${user.fullname}" (@${user.username})?\n\nThis action cannot be undone.`)) {
+            // Prevent deleting yourself
+            if (this.currentUser && (this.currentUser.userid === userId || this.currentUser.username === userId)) {
+                this.showToast('❌ Cannot delete your own account!');
+                return;
+            }
+
+            // Remove user from array
+            this.users = this.users.filter(u => String(u.userid) !== String(userId) && u.username !== userId);
+
+            // Save and sync to cloud
+            this.saveData('users');
+            this.renderUsers();
+            this.showToast(`✓ User "${user.fullname}" deleted successfully`);
         }
     }
 
