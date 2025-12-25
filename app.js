@@ -1,5 +1,5 @@
 ﻿// ===== STARCITY SHOP MANAGEMENT SYSTEM =====
-const TEST_MODE = true; // Set to false to activate login menu later
+const TEST_MODE = false; // Set to false to activate login menu later
 
 class StarcityApp {
     constructor() {
