@@ -151,6 +151,17 @@ class StarcityApp {
         }
     }
 
+    // Helper to reload data from localStorage
+    loadData(key, fallback = []) {
+        try {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : fallback;
+        } catch (e) {
+            console.warn(`Error loading ${key}:`, e);
+            return fallback;
+        }
+    }
+
     // ===== SAMPLE DATA =====
     loadSampleData() {
         if (this.stock.length === 0) {
@@ -447,6 +458,23 @@ class StarcityApp {
                     this.switchTechView(view);
                 }
             });
+        });
+
+        // Listen for cloud data loaded event to refresh user data
+        window.addEventListener('cloudDataLoaded', () => {
+            console.log('Cloud data loaded - refreshing app data');
+            // Reload all data from localStorage (which now has fresh cloud data)
+            this.users = this.loadData('starcity_users');
+            this.stock = this.loadData('starcity_stock');
+            this.sales = this.loadData('starcity_sales');
+            this.repairJobs = this.loadData('starcity_repairs');
+            this.vendors = this.loadData('starcity_vendors');
+            this.purchases = this.loadData('starcity_purchases');
+            this.expenses = this.loadData('starcity_expenses');
+            this.customerCredits = this.loadData('starcity_customer_credits');
+            this.vendorCredits = this.loadData('starcity_vendor_credits');
+            this.warrantyJobs = this.loadData('starcity_warranty');
+            console.log(`✓ App data refreshed - ${this.users.length} users loaded`);
         });
     }
 
