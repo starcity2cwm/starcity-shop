@@ -28,10 +28,10 @@ class SyncManager {
      * Get data from backend (replaces localStorage.getItem)
      */
     async getData(key, showLoader = true) {
-        // Try cache first for offline support
-        if (this.cache[key]) {
-            return this.cache[key];
-        }
+        // DISABLED: Always fetch fresh from cloud (no cache)
+        // if (this.cache[key]) {
+        //     return this.cache[key];
+        // }
 
         if (!this.isOnline) {
             console.warn('Offline - using cached data');
