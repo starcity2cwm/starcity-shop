@@ -130,14 +130,14 @@ class StarcityApp {
 
         if (this.users.length === 0 || !managerExists) {
             if (!managerExists) {
-                this.users.push({ id: 1, username: 'manager', password: 'admin123', name: 'Shop Manager', role: 'manager', active: true });
+                this.users.push({ userid: 1, username: 'manager', password: 'admin123', fullname: 'Shop Manager', role: 'manager', active: true });
             }
 
             // If completely empty, add others too
             if (this.users.length === 1) {
                 this.users.push(
-                    { id: 2, username: 'tech1', password: 'tech123', name: 'Kamal Silva', role: 'technician', active: true },
-                    { id: 3, username: 'tech2', password: 'tech123', name: 'Nimal Perera', role: 'technician', active: true }
+                    { userid: 2, username: 'tech1', password: 'tech123', fullname: 'Kamal Silva', role: 'technician', active: true },
+                    { userid: 3, username: 'tech2', password: 'tech123', fullname: 'Nimal Perera', role: 'technician', active: true }
                 );
             }
 
@@ -461,7 +461,7 @@ class StarcityApp {
             this.currentUser = user;
             this.showScreen(user.role === 'manager' ? 'manager' : 'technician');
             this.render();
-            this.showToast(`Welcome back, ${user.name}!`);
+            this.showToast(`Welcome back, ${user.fullname}!`);
         } else {
             this.showToast('Invalid username or password');
         }
@@ -3150,12 +3150,12 @@ Thank you!`;
         passwordInput.required = true; // Reset to required
 
         if (userId) {
-            const user = this.users.find(u => u.id === userId || u.username === userId);
+            const user = this.users.find(u => u.userid === userId || u.username === userId);
             if (user) {
                 title.textContent = 'Edit User';
-                document.getElementById('editUserId').value = user.id || user.username;
+                document.getElementById('editUserId').value = user.userid || user.username;
                 document.getElementById('userUsername').value = user.username;
-                document.getElementById('userName').value = user.name;
+                document.getElementById('userName').value = user.fullname;
                 document.getElementById('userRole').value = user.role;
                 document.getElementById('userPhone').value = user.phone || '';
                 // Make password optional when editing
@@ -3175,7 +3175,7 @@ Thank you!`;
         const password = document.getElementById('userPassword').value;
 
         const userData = {
-            name: document.getElementById('userName').value,
+            fullname: document.getElementById('userName').value,
             username: document.getElementById('userUsername').value,
             role: document.getElementById('userRole').value,
             phone: document.getElementById('userPhone').value,
@@ -3184,14 +3184,14 @@ Thank you!`;
 
         if (editId) {
             // Editing existing user
-            const index = this.users.findIndex(u => u.id === editId || u.username === editId);
+            const index = this.users.findIndex(u => u.userid === editId || u.username === editId);
             if (index !== -1) {
                 // Keep existing ID and password if not changed
-                userData.id = this.users[index].id;
+                userData.userid = this.users[index].userid;
                 userData.password = password ? password : this.users[index].password;
 
                 // Update current user if editing self
-                if (this.currentUser && (this.currentUser.id === editId || this.currentUser.username === editId)) {
+                if (this.currentUser && (this.currentUser.userid === editId || this.currentUser.username === editId)) {
                     Object.assign(this.currentUser, userData);
                 }
                 this.users[index] = userData;
@@ -3207,7 +3207,7 @@ Thank you!`;
                 this.showToast('❌ Password is required for new users!');
                 return;
             }
-            userData.id = 'user_' + Date.now();
+            userData.userid = 'user_' + Date.now();
             userData.password = password;
             this.users.push(userData);
             this.showToast('✓ User created successfully!');
@@ -3236,7 +3236,7 @@ Thank you!`;
                 return `
                 <div class="list-item">
                     <div class="list-item-header">
-                        <span class="list-item-title">${user.name} (@${user.username})</span>
+                        <span class="list-item-title">${user.fullname} (@${user.username})</span>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             ${roleBadge}
                             ${statusBadge}
@@ -3247,9 +3247,9 @@ Thank you!`;
                             ${user.phone ? `📱 ${user.phone}` : ''}
                         </div>
                         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                            <button class="btn btn-info btn-sm" onclick="app.openUserModal('${user.id || user.username}')">✏️ Edit</button>
+                            <button class="btn btn-info btn-sm" onclick="app.openUserModal('${user.userid || user.username}')">✏️ Edit</button>
                             <button class="btn ${user.active ? 'btn-warning' : 'btn-success'} btn-sm" 
-                                onclick="app.toggleUserStatus('${user.id || user.username}')">
+                                onclick="app.toggleUserStatus('${user.userid || user.username}')">
                                 ${user.active ? '🚫 Deactivate' : '✅ Activate'}
                             </button>
                         </div>
@@ -3265,7 +3265,7 @@ Thank you!`;
     }
 
     toggleUserStatus(userId) {
-        const user = this.users.find(u => String(u.id) === String(userId));
+        const user = this.users.find(u => String(u.userid) === String(userId));
         if (user) {
             user.active = !user.active;
             this.saveData('users');
