@@ -10,6 +10,8 @@ class SyncManager {
         this.cache = {}; // Local cache for offline support
         this.pendingSync = []; // Queue for offline operations
         this.isOnline = navigator.onLine;
+        this.loadingCount = 0; // Track parallel requests
+        this.globalSafetyTimer = null; // Global safety timer
 
         // Monitor connection status
         window.addEventListener('online', () => {
@@ -136,9 +138,23 @@ class SyncManager {
     }
 
     /**
-     * Show/hide loading indicator
+     * Show/hide loading indicator with counter
      */
     showLoading(message = 'Syncing...') {
+        this.loadingCount++;
+
+        // Clear any existing global safety timer
+        if (this.globalSafetyTimer) {
+            clearTimeout(this.globalSafetyTimer);
+        }
+
+        // Set a global safety timer (20 seconds max for all operations)
+        this.globalSafetyTimer = setTimeout(() => {
+            console.warn('Global sync timeout - forcing loader hide');
+            this.loadingCount = 0;
+            this.forceHideLoading();
+        }, 20000);
+
         let loader = document.getElementById('sync-loader');
         if (!loader) {
             loader = document.createElement('div');
@@ -164,7 +180,7 @@ class SyncManager {
         loader.innerHTML = `
             <span style="animation: spin 1s linear infinite; display: inline-block;">⏳</span> 
             ${message}
-            <button onclick="window.syncManager.hideLoading()" style="
+            <button onclick="window.syncManager.forceHideLoading()" style="
                 background: rgba(255,255,255,0.2);
                 border: none;
                 color: white;
@@ -179,6 +195,19 @@ class SyncManager {
     }
 
     hideLoading() {
+        this.loadingCount = Math.max(0, this.loadingCount - 1);
+
+        if (this.loadingCount === 0) {
+            this.forceHideLoading();
+        }
+    }
+
+    forceHideLoading() {
+        this.loadingCount = 0;
+        if (this.globalSafetyTimer) {
+            clearTimeout(this.globalSafetyTimer);
+            this.globalSafetyTimer = null;
+        }
         const loader = document.getElementById('sync-loader');
         if (loader) loader.style.display = 'none';
     }
